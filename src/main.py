@@ -7,6 +7,7 @@ from decision_engine.state_machine import FallStateMachine
 from alerts.buzzer import Buzzer
 from alerts.alert_controller import AlertController
 from decision_engine.range_monitor import RangeMonitor
+from decision_engine.comfort_rules import ComfortRules
 import time
 
 mode = "fall" 
@@ -15,6 +16,7 @@ fsm = FallStateMachine()
 buzzer = Buzzer()
 alerts = AlertController(buzzer)
 range_monitor = RangeMonitor()
+comfort = ComfortRules()
 
 prev_magnitude = 0
 
@@ -31,6 +33,7 @@ while True:
     state = fsm.update(spike, posture, inactive)
 
     alerts.handle(state)
+    comfort.update()
 
     print(
         f"MAG:{magnitude:.2f} | "
@@ -43,3 +46,7 @@ while True:
 
     if range_state == "OUT_OF_RANGE":
         print("USER OUT OF RANGE")
+
+    if state == "ALERT":
+        if comfort.can_alert():
+            alerts.handle(state)
