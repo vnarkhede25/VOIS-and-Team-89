@@ -3,25 +3,30 @@ from detection.motion_analysis import calculate_magnitude
 from detection.threshold_fall import detect_fall
 from detection.posture_detection import detect_posture
 from detection.inactivity import is_inactive
+from decision_engine.state_machine import FallStateMachine
 import time
 
 mode = "fall"  
 
+fsm = FallStateMachine()
 prev_magnitude = 0
 
 while True:
     ax, ay, az = get_motion_data(mode)
     magnitude = calculate_magnitude(ax, ay, az)
 
-    fall_spike = detect_fall(magnitude)
+    spike = detect_fall(magnitude)
     posture = detect_posture(az)
     inactive = is_inactive(magnitude, prev_magnitude)
+
+    state = fsm.update(spike, posture, inactive)
 
     print(
         f"MAG:{magnitude:.2f} | "
         f"POSTURE:{posture} | "
-        f"SPIKE:{fall_spike} | "
-        f"INACTIVE:{inactive}"
+        f"SPIKE:{spike} | "
+        f"INACTIVE:{inactive} | "
+        f"STATE:{state}"
     )
 
     prev_magnitude = magnitude
