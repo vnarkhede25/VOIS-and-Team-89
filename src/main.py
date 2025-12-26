@@ -4,11 +4,16 @@ from detection.threshold_fall import detect_fall
 from detection.posture_detection import detect_posture
 from detection.inactivity import is_inactive
 from decision_engine.state_machine import FallStateMachine
+from alerts.buzzer import Buzzer
+from alerts.alert_controller import AlertController
 import time
 
-mode = "fall"  
+mode = "fall" 
 
 fsm = FallStateMachine()
+buzzer = Buzzer()
+alerts = AlertController(buzzer)
+
 prev_magnitude = 0
 
 while True:
@@ -21,11 +26,11 @@ while True:
 
     state = fsm.update(spike, posture, inactive)
 
+    alerts.handle(state)
+
     print(
         f"MAG:{magnitude:.2f} | "
         f"POSTURE:{posture} | "
-        f"SPIKE:{spike} | "
-        f"INACTIVE:{inactive} | "
         f"STATE:{state}"
     )
 
