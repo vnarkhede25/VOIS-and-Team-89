@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverCare - Guardian Dashboard</title>
+    <link rel="stylesheet" href="guardian_styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SilverCare Guardian">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon">🛡️</div>
+                    <div class="logo-text">
+                        <h1>SilverCare</h1>
+                        <span>Guardian Dashboard</span>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="patient-selector">
+                        <select id="patientSelect" onchange="loadPatientData()">
+                            <option value="">Select Patient...</option>
+                        </select>
+                    </div>
+                    <div class="user-info">
+                        <span id="guardianName">Guest</span>
+                        <button class="logout-btn" onclick="logout()">Logout</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Status Overview -->
+        <section class="status-overview">
+            <div class="status-cards">
+                <div class="status-card online">
+                    <div class="status-icon">🟢</div>
+                    <div class="status-info">
+                        <div class="status-number" id="onlineStatus">--</div>
+                        <div class="status-label">Device Status</div>
+                    </div>
+                </div>
+                <div class="status-card alerts">
+                    <div class="status-icon">🚨</div>
+                    <div class="status-info">
+                        <div class="status-number" id="alertCount">0</div>
+                        <div class="status-label">Active Alerts</div>
+                    </div>
+                </div>
+                <div class="status-card medicines">
+                    <div class="status-icon">💊</div>
+                    <div class="status-info">
+                        <div class="status-number" id="medicineCount">0</div>
+                        <div class="status-label">Pending Meds</div>
+                    </div>
+                </div>
+                <div class="status-card critical">
+                    <div class="status-icon">⚠️</div>
+                    <div class="status-info">
+                        <div class="status-number" id="criticalCount">0</div>
+                        <div class="status-label">Critical</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Content Grid -->
+        <main class="main-content">
+            <!-- Patient Information -->
+            <section class="patient-section">
+                <div class="section-header">
+                    <h2>Patient Information</h2>
+                    <button class="refresh-btn" onclick="refreshData()">🔄 Refresh</button>
+                </div>
+                <div class="patient-card" id="patientCard">
+                    <div class="patient-avatar" id="patientAvatar">
+                        <span>--</span>
+                    </div>
+                    <div class="patient-details">
+                        <div class="patient-name" id="patientName">Select Patient</div>
+                        <div class="patient-info-grid">
+                            <div class="info-item">
+                                <span class="info-label">Age</span>
+                                <span class="info-value" id="patientAge">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Risk Level</span>
+                                <span class="info-value">
+                                    <span class="risk-badge" id="riskLevel">LOW</span>
+                                </span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Last Seen</span>
+                                <span class="info-value" id="lastSeen">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Device</span>
+                                <span class="info-value" id="deviceStatus">--</span>
+                            </div>
+                        </div>
+                        <div class="additional-info">
+                            <div class="info-item">
+                                <span class="info-label">Emergency Contact</span>
+                                <span class="info-value" id="emergencyContact">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Medical Conditions</span>
+                                <span class="info-value" id="medicalConditions">--</span>
+                            </div>
+                            <div class="info-item">
+                                <span class="info-label">Location</span>
+                                <span class="info-value" id="patientLocation">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Section -->
+            <section class="alerts-section">
+                <div class="section-header">
+                    <h2>Recent Alerts</h2>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="filterAlerts('all')">All</button>
+                        <button class="filter-tab" onclick="filterAlerts('critical')">Critical</button>
+                        <button class="filter-tab" onclick="filterAlerts('unacknowledged')">Unacknowledged</button>
+                    </div>
+                </div>
+                <div class="alerts-list" id="alertsList">
+                    <div class="empty-state">
+                        <div class="empty-icon">🚨</div>
+                        <h3>No alerts</h3>
+                        <p>Select a patient to view their alerts</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Medicines Section -->
+            <section class="medicines-section">
+                <div class="section-header">
+                    <h2>Medicine Adherence</h2>
+                    <button class="add-medicine-btn" onclick="openAddMedicine()">+ Add Medicine</button>
+                </div>
+                <div class="medicines-list" id="medicinesList">
+                    <div class="empty-state">
+                        <div class="empty-icon">💊</div>
+                        <h3>No medicines</h3>
+                        <p>Select a patient to view their medicines</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Health Metrics -->
+            <section class="health-section">
+                <div class="section-header">
+                    <h2>Health Metrics</h2>
+                    <select id="timeRange" onchange="updateHealthMetrics()">
+                        <option value="today">Today</option>
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                    </select>
+                </div>
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-icon">🚶</div>
+                        <div class="metric-info">
+                            <div class="metric-value" id="activityLevel">--</div>
+                            <div class="metric-label">Activity Level</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">😴</div>
+                        <div class="metric-info">
+                            <div class="metric-value" id="sleepQuality">--</div>
+                            <div class="metric-label">Sleep Quality</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">💓</div>
+                        <div class="metric-info">
+                            <div class="metric-value" id="heartRate">--</div>
+                            <div class="metric-label">Heart Rate</div>
+                        </div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-icon">🧘</div>
+                        <div class="metric-info">
+                            <div class="metric-value" id="stressLevel">--</div>
+                            <div class="metric-label">Stress Level</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Communication -->
+            <section class="communication-section">
+                <div class="section-header">
+                    <h2>Communication</h2>
+                </div>
+                <div class="communication-actions">
+                    <button class="comm-btn call" onclick="callPatient()">
+                        <div class="comm-icon">📞</div>
+                        <span>Call Patient</span>
+                    </button>
+                    <button class="comm-btn video" onclick="videoCallPatient()">
+                        <div class="comm-icon">📹</div>
+                        <span>Video Call</span>
+                    </button>
+                    <button class="comm-btn message" onclick="sendMessage()">
+                        <div class="comm-icon">💬</div>
+                        <span>Send Message</span>
+                    </button>
+                    <button class="comm-btn emergency" onclick="triggerEmergency()">
+                        <div class="comm-icon">🚨</div>
+                        <span>Emergency Alert</span>
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Alert Detail Modal -->
+        <div class="modal" id="alertModal">
+            <div class="modal-overlay" onclick="closeModal('alertModal')"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Alert Details</h3>
+                    <button class="close-btn" onclick="closeModal('alertModal')">&times;</button>
+                </div>
+                <div class="modal-body" id="alertModalBody">
+                    <!-- Alert details will be populated here -->
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-acknowledge" onclick="acknowledgeAlert()">Acknowledge</button>
+                    <button class="btn btn-contact" onclick="contactPatient()">Contact Patient</button>
+                    <button class="btn btn-emergency" onclick="callEmergency()">Call Emergency</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Medicine Modal -->
+        <div class="modal" id="medicineModal">
+            <div class="modal-overlay" onclick="closeModal('medicineModal')"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Add Medicine</h3>
+                    <button class="close-btn" onclick="closeModal('medicineModal')">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <form id="medicineForm">
+                        <div class="form-group">
+                            <label for="medicineName">Medicine Name</label>
+                            <input type="text" id="medicineName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="medicineDosage">Dosage</label>
+                            <input type="text" id="medicineDosage" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="medicineTime">Time</label>
+                            <input type="time" id="medicineTime" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="medicineFrequency">Frequency</label>
+                            <select id="medicineFrequency">
+                                <option value="daily">Daily</option>
+                                <option value="weekly">Weekly</option>
+                                <option value="as_needed">As Needed</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="medicineNotes">Notes</label>
+                            <textarea id="medicineNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal('medicineModal')">Cancel</button>
+                    <button class="btn btn-primary" onclick="saveMedicine()">Save Medicine</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let currentPatientId = null;
+        let refreshInterval = null;
+        let currentAlertFilter = 'all';
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            loadPatients();
+            startAutoRefresh();
+        });
+
+        // Check authentication
+        function checkAuthentication() {
+            if (localStorage.getItem('guardianLoggedIn') !== 'true') {
+                window.location.href = 'guardian_login.html';
+                return;
+            }
+            
+            const guardianEmail = localStorage.getItem('guardianEmail');
+            document.getElementById('guardianName').textContent = guardianEmail || 'Guardian';
+        }
+
+        // Load patients
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE}/patients`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('patientSelect');
+                    select.innerHTML = '<option value="">Select Patient...</option>';
+                    
+                    data.patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.patient_id;
+                        option.textContent = `${patient.name} (${patient.patient_id})`;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
+
+        // Load patient data
+        async function loadPatientData() {
+            const select = document.getElementById('patientSelect');
+            currentPatientId = select.value;
+            
+            if (!currentPatientId) {
+                resetDashboard();
+                return;
+            }
+            
+            try {
+                const response = await fetch(`${API_BASE}/dashboard/${currentPatientId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updatePatientInfo(data.patient);
+                    updateAlerts(data.recent_alerts || []);
+                    updateMedicines(data.medicines || []);
+                    updateStatusCounts(data);
+                    updateHealthMetrics();
+                }
+            } catch (error) {
+                console.error('Error loading patient data:', error);
+            }
+        }
+
+        // Update patient information
+        function updatePatientInfo(patient) {
+            // Update avatar
+            const initials = patient.name.split(' ').map(n => n[0]).join('').toUpperCase();
+            document.getElementById('patientAvatar').innerHTML = `<span>${initials}</span>`;
+            
+            // Update basic info
+            document.getElementById('patientName').textContent = patient.name;
+            document.getElementById('patientAge').textContent = patient.age || '--';
+            document.getElementById('lastSeen').textContent = formatDateTime(patient.last_seen);
+            document.getElementById('deviceStatus').textContent = patient.device_status || '--';
+            document.getElementById('patientLocation').textContent = patient.location || 'Home';
+            
+            // Update risk level
+            if (patient.risk_assessment) {
+                const riskElement = document.getElementById('riskLevel');
+                riskElement.textContent = patient.risk_assessment.level;
+                riskElement.className = `risk-badge ${patient.risk_assessment.level.toLowerCase()}`;
+            }
+            
+            // Update emergency contact
+            if (patient.emergency_contacts && patient.emergency_contacts.length > 0) {
+                const primaryContact = patient.emergency_contacts.find(c => c.primary);
+                if (primaryContact) {
+                    document.getElementById('emergencyContact').textContent = 
+                        `${primaryContact.name} (${primaryContact.phone})`;
+                }
+            }
+            
+            // Update medical conditions
+            if (patient.medical_conditions && patient.medical_conditions.length > 0) {
+                document.getElementById('medicalConditions').textContent = 
+                    patient.medical_conditions.join(', ');
+            }
+        }
+
+        // Update alerts
+        function updateAlerts(alerts) {
+            const alertsList = document.getElementById('alertsList');
+            
+            if (alerts.length === 0) {
+                alertsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">🚨</div>
+                        <h3>No recent alerts</h3>
+                        <p>Patient has been safe and stable</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            const filteredAlerts = filterAlertsList(alerts, currentAlertFilter);
+            
+            alertsList.innerHTML = filteredAlerts.map(alert => `
+                <div class="alert-item ${alert.severity} ${alert.acknowledged ? 'acknowledged' : ''}">
+                    <div class="alert-header">
+                        <div class="alert-type">
+                            <span class="alert-icon">${getAlertIcon(alert.alert_type)}</span>
+                            <span class="alert-title">${alert.alert_type.toUpperCase()}</span>
+                        </div>
+                        <div class="alert-time">${formatDateTime(alert.timestamp)}</div>
+                    </div>
+                    <div class="alert-message">${formatAlertMessage(alert)}</div>
+                    <div class="alert-details">
+                        <div class="detail-item">
+                            <span class="detail-label">Confidence:</span>
+                            <span class="detail-value">${Math.round((alert.confidence || 0) * 100)}%</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Device:</span>
+                            <span class="detail-value">${alert.device_id || 'Unknown'}</span>
+                        </div>
+                    </div>
+                    <div class="alert-actions">
+                        ${!alert.acknowledged ? `
+                            <button class="btn btn-acknowledge" onclick="acknowledgeAlert('${alert.alert_id}')">
+                                Acknowledge
+                            </button>
+                        ` : `
+                            <span class="acknowledged-badge">✓ Acknowledged</span>
+                        `}
+                        <button class="btn btn-contact" onclick="contactPatient('${alert.patient_id}')">
+                            Contact
+                        </button>
+                        ${alert.severity === 'critical' ? `
+                            <button class="btn btn-emergency" onclick="callEmergency('${alert.patient_id}')">
+                                🚨 Emergency
+                            </button>
+                        ` : ''}
+                        <button class="btn btn-details" onclick="showAlertDetails('${alert.alert_id}')">
+                            Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update medicines
+        function updateMedicines(medicines) {
+            const medicinesList = document.getElementById('medicinesList');
+            
+            if (medicines.length === 0) {
+                medicinesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💊</div>
+                        <h3>No medicines scheduled</h3>
+                        <p>Add medicines to track adherence</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            medicinesList.innerHTML = medicines.map(medicine => `
+                <div class="medicine-item">
+                    <div class="medicine-icon">💊</div>
+                    <div class="medicine-info">
+                        <div class="medicine-name">${medicine.name}</div>
+                        <div class="medicine-details">
+                            <span class="medicine-dosage">${medicine.dosage}</span>
+                            <span class="medicine-time">${medicine.time}</span>
+                            <span class="medicine-frequency">${medicine.frequency}</span>
+                        </div>
+                        ${medicine.notes ? `<div class="medicine-notes">${medicine.notes}</div>` : ''}
+                    </div>
+                    <div class="medicine-status">
+                        <span class="status-badge ${medicine.taken ? 'taken' : 'pending'}">
+                            ${medicine.taken ? '✅ Taken' : '⏰ Pending'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Update status counts
+        function updateStatusCounts(data) {
+            document.getElementById('alertCount').textContent = data.alert_count || 0;
+            document.getElementById('criticalCount').textContent = data.critical_alerts || 0;
+            document.getElementById('medicineCount').textContent = data.pending_medicines || 0;
+            
+            // Update online status
+            const patient = data.patient;
+            if (patient && patient.device_status === 'online') {
+                document.getElementById('onlineStatus').textContent = '🟢';
+                document.getElementById('onlineStatus').className = 'status-number online';
+            } else {
+                document.getElementById('onlineStatus').textContent = '🔴';
+                document.getElementById('onlineStatus').className = 'status-number offline';
+            }
+        }
+
+        // Update health metrics
+        function updateHealthMetrics() {
+            // Simulated health metrics
+            const timeRange = document.getElementById('timeRange').value;
+            
+            const metrics = {
+                today: {
+                    activity: 'Moderate',
+                    sleep: 'Good',
+                    heartRate: '72 bpm',
+                    stress: 'Low'
+                },
+                week: {
+                    activity: 'High',
+                    sleep: 'Excellent',
+                    heartRate: '70 bpm',
+                    stress: 'Moderate'
+                },
+                month: {
+                    activity: 'Consistent',
+                    sleep: 'Good',
+                    heartRate: '71 bpm',
+                    stress: 'Low'
+                }
+            };
+            
+            const currentMetrics = metrics[timeRange];
+            document.getElementById('activityLevel').textContent = currentMetrics.activity;
+            document.getElementById('sleepQuality').textContent = currentMetrics.sleep;
+            document.getElementById('heartRate').textContent = currentMetrics.heartRate;
+            document.getElementById('stressLevel').textContent = currentMetrics.stress;
+        }
+
+        // Filter alerts
+        function filterAlerts(filter) {
+            currentAlertFilter = filter;
+            
+            // Update active tab
+            document.querySelectorAll('.filter-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Reload alerts with new filter
+            if (currentPatientId) {
+                loadPatientData();
+            }
+        }
+
+        function filterAlertsList(alerts, filter) {
+            switch (filter) {
+                case 'critical':
+                    return alerts.filter(alert => alert.severity === 'critical');
+                case 'unacknowledged':
+                    return alerts.filter(alert => !alert.acknowledged);
+                default:
+                    return alerts;
+            }
+        }
+
+        // Alert actions
+        async function acknowledgeAlert(alertId) {
+            try {
+                const response = await fetch(`${API_BASE}/alerts/${alertId}/acknowledge`, {
+                    method: 'POST'
+                });
+                
+                if (response.ok) {
+                    refreshData();
+                }
+            } catch (error) {
+                console.error('Error acknowledging alert:', error);
+            }
+        }
+
+        function showAlertDetails(alertId) {
+            // Find alert and show details in modal
+            // This would populate the modal with detailed alert information
+            document.getElementById('alertModal').style.display = 'flex';
+        }
+
+        // Communication functions
+        function callPatient() {
+            if (!currentPatientId) return;
+            // Would initiate phone call
+            alert(`Calling patient ${currentPatientId}...`);
+        }
+
+        function videoCallPatient() {
+            if (!currentPatientId) return;
+            // Would initiate video call
+            alert(`Starting video call with patient ${currentPatientId}...`);
+        }
+
+        function sendMessage() {
+            if (!currentPatientId) return;
+            // Would open messaging interface
+            alert(`Opening message interface for patient ${currentPatientId}...`);
+        }
+
+        function triggerEmergency() {
+            if (!currentPatientId) return;
+            
+            if (confirm('Are you sure you want to trigger emergency services?')) {
+                alert(`🚨 Emergency services called for patient ${currentPatientId}!`);
+            }
+        }
+
+        function callEmergency(patientId) {
+            if (confirm('Are you sure you want to call emergency services?')) {
+                alert(`🚨 Emergency services called for patient ${patientId}!`);
+            }
+        }
+
+        function contactPatient(patientId) {
+            alert(`Contacting patient ${patientId}...`);
+        }
+
+        // Medicine functions
+        function openAddMedicine() {
+            if (!currentPatientId) {
+                alert('Please select a patient first');
+                return;
+            }
+            document.getElementById('medicineModal').style.display = 'flex';
+        }
+
+        async function saveMedicine() {
+            if (!currentPatientId) return;
+            
+            const medicineData = {
+                patient_id: currentPatientId,
+                name: document.getElementById('medicineName').value,
+                dosage: document.getElementById('medicineDosage').value,
+                time: document.getElementById('medicineTime').value,
+                frequency: document.getElementById('medicineFrequency').value,
+                notes: document.getElementById('medicineNotes').value
+            };
+            
+            try {
+                const response = await fetch(`${API_BASE}/medicines/add`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(medicineData)
+                });
+                
+                if (response.ok) {
+                    closeModal('medicineModal');
+                    refreshData();
+                    // Reset form
+                    document.getElementById('medicineForm').reset();
+                }
+            } catch (error) {
+                console.error('Error saving medicine:', error);
+            }
+        }
+
+        // Utility functions
+        function refreshData() {
+            if (currentPatientId) {
+                loadPatientData();
+            }
+        }
+
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                if (currentPatientId) {
+                    refreshData();
+                }
+            }, 30000); // Refresh every 30 seconds
+        }
+
+        function resetDashboard() {
+            document.getElementById('patientAvatar').innerHTML = '<span>--</span>';
+            document.getElementById('patientName').textContent = 'Select Patient';
+            document.getElementById('patientAge').textContent = '--';
+            document.getElementById('lastSeen').textContent = '--';
+            document.getElementById('deviceStatus').textContent = '--';
+            document.getElementById('riskLevel').textContent = 'LOW';
+            document.getElementById('emergencyContact').textContent = '--';
+            document.getElementById('medicalConditions').textContent = '--';
+            document.getElementById('patientLocation').textContent = '--';
+            document.getElementById('alertsList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🚨</div>
+                    <h3>No alerts</h3>
+                    <p>Select a patient to view their alerts</p>
+                </div>
+            `;
+            document.getElementById('medicinesList').innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">💊</div>
+                    <h3>No medicines</h3>
+                    <p>Select a patient to view their medicines</p>
+                </div>
+            `;
+            document.getElementById('alertCount').textContent = '0';
+            document.getElementById('criticalCount').textContent = '0';
+            document.getElementById('medicineCount').textContent = '0';
+            document.getElementById('onlineStatus').textContent = '--';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('guardianLoggedIn');
+                localStorage.removeItem('guardianEmail');
+                window.location.href = 'guardian_login.html';
+            }
+        }
+
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+
+        function getAlertIcon(alertType) {
+            const icons = {
+                'fall': '🚨',
+                'instability': '⚠️',
+                'inactivity': '😴',
+                'medicine': '💊',
+                'emergency': '🆘'
+            };
+            return icons[alertType] || '📢';
+        }
+
+        function formatAlertMessage(alert) {
+            if (alert.details && alert.details.detection_method) {
+                return `Fall detected via ${alert.details.detection_method} (Confidence: ${Math.round((alert.confidence || 0) * 100)}%)`;
+            }
+            return alert.alert_type ? `${alert.alert_type} detected` : 'Alert detected';
+        }
+
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        });
+    </script>
+</body>
+</html>

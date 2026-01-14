@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SilverCare Guardian Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+        
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .logout-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: #dc2626;
+        }
+        
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        
+        .status-online { background: #10b981; }
+        .status-warning { background: #f59e0b; }
+        .status-critical { background: #ef4444; }
+        .status-offline { background: #6b7280; }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        .card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .patient-info {
+            display: grid;
+            gap: 10px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .info-label {
+            color: #6b7280;
+            font-size: 0.9rem;
+        }
+        
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .alerts-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .alert-item {
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid;
+            background: #f9fafb;
+        }
+        
+        .alert-critical {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .alert-high {
+            border-left-color: #f59e0b;
+            background: #fffbeb;
+        }
+        
+        .alert-medium {
+            border-left-color: #3b82f6;
+            background: #eff6ff;
+        }
+        
+        .alert-low {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .alert-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+        
+        .alert-type {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .alert-time {
+            font-size: 0.8rem;
+            color: #6b7280;
+        }
+        
+        .alert-details {
+            font-size: 0.9rem;
+            color: #666;
+        }
+        
+        .alert-actions {
+            margin-top: 10px;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s;
+        }
+        
+        .btn-acknowledge {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-acknowledge:hover {
+            background: #059669;
+        }
+        
+        .btn-emergency {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-emergency:hover {
+            background: #dc2626;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .stat-label {
+            font-size: 0.8rem;
+            color: #6b7280;
+            margin-top: 5px;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+        
+        .error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #dc2626;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        
+        .patient-selector {
+            margin-bottom: 20px;
+        }
+        
+        .patient-selector select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🛡️ SilverCare Guardian Dashboard</h1>
+            <div class="status-bar">
+                <div class="status-indicator">
+                    <div class="status-dot" id="connectionStatus"></div>
+                    <span id="connectionText">Connecting...</span>
+                </div>
+                <div class="status-indicator">
+                    <span id="guardianInfo">Not logged in</span>
+                </div>
+                <div class="status-indicator">
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                </div>
+                <div class="status-indicator">
+                    <span>Last updated: <span id="lastUpdated">Never</span></span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="patient-selector">
+            <select id="patientSelect" onchange="loadPatientData()">
+                <option value="">Select a patient...</option>
+            </select>
+        </div>
+        
+        <div class="stats-grid" id="statsGrid" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-number" id="totalAlerts">0</div>
+                <div class="stat-label">Total Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="criticalAlerts">0</div>
+                <div class="stat-label">Critical Alerts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="deviceStatus">🟢</div>
+                <div class="stat-label">Device Status</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lastSeen">--</div>
+                <div class="stat-label">Last Seen</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid" id="dashboardGrid" style="display: none;">
+            <div class="card">
+                <h2>📋 Patient Information</h2>
+                <div class="patient-info" id="patientInfo">
+                    <div class="loading">Loading patient data...</div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2>🚨 Recent Alerts</h2>
+                <div class="alerts-container" id="alertsContainer">
+                    <div class="loading">Loading alerts...</div>
+                </div>
+            </div>
+        </div>
+        
+        <div id="errorMessage" class="error" style="display: none;"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let currentPatientId = null;
+        let refreshInterval = null;
+        
+        // Initialize dashboard
+        window.onload = function() {
+            checkAuthentication();
+        };
+        
+        // Check authentication
+        function checkAuthentication() {
+            if (localStorage.getItem('guardianLoggedIn') !== 'true') {
+                window.location.href = 'guardian_login.html';
+                return;
+            }
+            
+            const guardianEmail = localStorage.getItem('guardianEmail');
+            document.getElementById('guardianInfo').textContent = `Logged in as: ${guardianEmail}`;
+            
+            loadPatients();
+            startAutoRefresh();
+        }
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('guardianLoggedIn');
+            localStorage.removeItem('guardianEmail');
+            window.location.href = 'guardian_login.html';
+        }
+        
+        // Load all patients
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE}/patients`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const select = document.getElementById('patientSelect');
+                    select.innerHTML = '<option value="">Select a patient...</option>';
+                    
+                    data.patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.patient_id;
+                        option.textContent = `${patient.name} (${patient.patient_id})`;
+                        select.appendChild(option);
+                    });
+                    
+                    updateConnectionStatus(true);
+                } else {
+                    showError('Failed to load patients');
+                }
+            } catch (error) {
+                console.error('Error loading patients:', error);
+                showError('Failed to connect to backend server');
+                updateConnectionStatus(false);
+            }
+        }
+        
+        // Load patient data
+        async function loadPatientData() {
+            const select = document.getElementById('patientSelect');
+            currentPatientId = select.value;
+            
+            if (!currentPatientId) {
+                hideDashboard();
+                return;
+            }
+            
+            try {
+                // Load dashboard data
+                const response = await fetch(`${API_BASE}/dashboard/${currentPatientId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    displayPatientInfo(data.patient);
+                    displayAlerts(data.recent_alerts);
+                    displayStats(data);
+                    showDashboard();
+                    updateLastSeen();
+                } else {
+                    showError(data.error || 'Failed to load patient data');
+                }
+            } catch (error) {
+                console.error('Error loading patient data:', error);
+                showError('Failed to load patient data');
+            }
+        }
+        
+        // Display patient information
+        function displayPatientInfo(patient) {
+            const container = document.getElementById('patientInfo');
+            container.innerHTML = `
+                <div class="info-row">
+                    <span class="info-label">Name:</span>
+                    <span class="info-value">${patient.name}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Patient ID:</span>
+                    <span class="info-value">${patient.patient_id}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Age:</span>
+                    <span class="info-value">${patient.age}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Status:</span>
+                    <span class="info-value">${patient.status}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Device Status:</span>
+                    <span class="info-value">${patient.device_status}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Last Seen:</span>
+                    <span class="info-value">${formatDateTime(patient.last_seen)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Guardians:</span>
+                    <span class="info-value">${patient.guardians.length} registered</span>
+                </div>
+            `;
+        }
+        
+        // Display alerts
+        function displayAlerts(alerts) {
+            const container = document.getElementById('alertsContainer');
+            
+            if (alerts.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #6b7280; padding: 20px;">No recent alerts</div>';
+                return;
+            }
+            
+            container.innerHTML = alerts.map(alert => `
+                <div class="alert-item alert-${alert.severity}">
+                    <div class="alert-header">
+                        <span class="alert-type">${alert.alert_type.toUpperCase()}</span>
+                        <span class="alert-time">${formatDateTime(alert.timestamp)}</span>
+                    </div>
+                    <div class="alert-details">${alert.details.description || 'No description available'}</div>
+                    ${!alert.acknowledged ? `
+                        <div class="alert-actions">
+                            <button class="btn btn-acknowledge" onclick="acknowledgeAlert('${alert.alert_id}')">
+                                Acknowledge
+                            </button>
+                            ${alert.severity === 'critical' ? `
+                                <button class="btn btn-emergency" onclick="callEmergency()">
+                                    🚨 Emergency
+                                </button>
+                            ` : ''}
+                        </div>
+                    ` : '<div style="color: #10b981; font-size: 0.8rem; margin-top: 5px;">✅ Acknowledged</div>'}
+                </div>
+            `).join('');
+        }
+        
+        // Display statistics
+        function displayStats(data) {
+            document.getElementById('totalAlerts').textContent = data.alert_count;
+            document.getElementById('criticalAlerts').textContent = data.critical_alerts;
+            document.getElementById('deviceStatus').textContent = data.patient.device_status === 'online' ? '🟢' : '🔴';
+            
+            const lastSeen = new Date(data.patient.last_seen);
+            const now = new Date();
+            const diffMinutes = Math.floor((now - lastSeen) / 60000);
+            
+            if (diffMinutes < 1) {
+                document.getElementById('lastSeen').textContent = 'Now';
+            } else if (diffMinutes < 60) {
+                document.getElementById('lastSeen').textContent = `${diffMinutes}m`;
+            } else {
+                const diffHours = Math.floor(diffMinutes / 60);
+                document.getElementById('lastSeen').textContent = `${diffHours}h`;
+            }
+        }
+        
+        // Acknowledge alert
+        async function acknowledgeAlert(alertId) {
+            try {
+                const response = await fetch(`${API_BASE}/alerts/${alertId}/acknowledge`, {
+                    method: 'POST'
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Refresh alerts
+                    loadPatientData();
+                } else {
+                    showError('Failed to acknowledge alert');
+                }
+            } catch (error) {
+                console.error('Error acknowledging alert:', error);
+                showError('Failed to acknowledge alert');
+            }
+        }
+        
+        // Call emergency (placeholder)
+        function callEmergency() {
+            if (confirm('This will notify emergency services. Continue?')) {
+                alert('Emergency services have been notified! (This is a demo)');
+            }
+        }
+        
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('connectionStatus');
+            const text = document.getElementById('connectionText');
+            
+            if (connected) {
+                dot.className = 'status-dot status-online';
+                text.textContent = 'Connected';
+            } else {
+                dot.className = 'status-dot status-offline';
+                text.textContent = 'Disconnected';
+            }
+        }
+        
+        // Update last seen time
+        function updateLastSeen() {
+            document.getElementById('lastUpdated').textContent = formatDateTime(new Date());
+        }
+        
+        // Show/hide dashboard
+        function showDashboard() {
+            document.getElementById('statsGrid').style.display = 'grid';
+            document.getElementById('dashboardGrid').style.display = 'grid';
+        }
+        
+        function hideDashboard() {
+            document.getElementById('statsGrid').style.display = 'none';
+            document.getElementById('dashboardGrid').style.display = 'none';
+        }
+        
+        // Show error message
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+        
+        // Format date/time
+        function formatDateTime(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString();
+        }
+        
+        // Auto refresh
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                if (currentPatientId) {
+                    loadPatientData();
+                }
+            }, 30000); // Refresh every 30 seconds
+        }
+        
+        // Cleanup on page unload
+        window.onbeforeunload = function() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+            }
+        };
+    </script>
+</body>
+</html>

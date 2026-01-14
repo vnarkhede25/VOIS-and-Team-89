@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SilverCare - Health</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SilverCare">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-btn" onclick="window.history.back()">←</button>
+            <h1>Health Dashboard</h1>
+            <div class="status-badge success">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="10" fill="currentColor"/>
+                    <path d="M6 10l3 3 5-6" stroke="white" stroke-width="2" fill="none"/>
+                </svg>
+                Active
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Health Status Cards -->
+            <section class="health-overview">
+                <div class="status-cards">
+                    <div class="status-card">
+                        <div class="card-icon">💊</div>
+                        <div class="card-number" id="total-medicines">0</div>
+                        <div class="card-label">Total Medicines</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="card-icon">✅</div>
+                        <div class="card-number" id="taken-medicines">0</div>
+                        <div class="card-label">Taken</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="card-icon">⏰</div>
+                        <div class="card-number" id="pending-medicines">0</div>
+                        <div class="card-label">Pending</div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Today's Medicines -->
+            <section class="medicines-section">
+                <div class="section-header">
+                    <h2>💊 Today's Medicines</h2>
+                    <button class="refresh-btn" onclick="loadMedicines()">🔄</button>
+                </div>
+                <div id="medicine-list" class="medicine-list">
+                    <div class="loading-state">
+                        <div class="loading-spinner">⏳</div>
+                        <p>Loading medicines...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Guardian Suggestions -->
+            <section class="suggestions-section">
+                <div class="section-header">
+                    <h2>📝 Guardian Suggestions</h2>
+                    <button class="refresh-btn" onclick="loadSuggestions()">🔄</button>
+                </div>
+                <div id="suggestions-list" class="suggestions-list">
+                    <div class="loading-state">
+                        <div class="loading-spinner">⏳</div>
+                        <p>Loading suggestions...</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Health Tips -->
+            <section class="health-tips">
+                <div class="section-header">
+                    <h2>💡 Health Tips</h2>
+                </div>
+                <div class="tips-list">
+                    <div class="tip-card">
+                        <div class="tip-icon">💧</div>
+                        <div class="tip-content">
+                            <h4>Stay Hydrated</h4>
+                            <p>Drink at least 8 glasses of water daily</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">🚶</div>
+                        <div class="tip-content">
+                            <h4>Daily Walk</h4>
+                            <p>Take a 15-minute walk for better health</p>
+                        </div>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">😴</div>
+                        <div class="tip-content">
+                            <h4>Good Sleep</h4>
+                            <p>Aim for 7-8 hours of quality sleep</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <a href="#" class="nav-item" onclick="window.location.href='test.html'">
+                <div class="nav-icon">💬</div>
+                <span>Assistant</span>
+            </a>
+            <a href="health.html" class="nav-item active">
+                <div class="nav-icon">❤️</div>
+                <span>Health</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- Medicine Reminder Modal -->
+    <div id="medicine-modal" class="modal">
+        <div class="modal-overlay" onclick="closeMedicineModal()"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>💊 Medicine Reminder</h3>
+                <button class="close-btn" onclick="closeMedicineModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="medicine-info">
+                    <h4 id="medicine-name"></h4>
+                    <p id="medicine-time"></p>
+                    <p id="medicine-dosage"></p>
+                </div>
+                <div class="reminder-actions">
+                    <button class="action-btn success" onclick="confirmMedicine(true)">
+                        <span class="btn-icon">✅</span>
+                        <span>Taken</span>
+                    </button>
+                    <button class="action-btn warning" onclick="confirmMedicine(false)">
+                        <span class="btn-icon">❌</span>
+                        <span>Not Taken</span>
+                    </button>
+                    <button class="action-btn secondary" onclick="snoozeMedicine()">
+                        <span class="btn-icon">⏰</span>
+                        <span>Snooze</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://127.0.0.1:5001';
+        let currentElderlyId = localStorage.getItem('elderlyId') || 'ELD001';
+        let medicines = [];
+        let suggestions = [];
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMedicines();
+            loadSuggestions();
+            startMedicineReminderChecker();
+        });
+
+        // Load medicines from backend
+        async function loadMedicines() {
+            try {
+                const response = await fetch(`${API_BASE}/medicines/${currentElderlyId}`);
+                const data = await response.json();
+                medicines = data.medicines || [];
+                displayMedicines();
+                updateStatusSummary();
+            } catch (error) {
+                console.error('Error loading medicines:', error);
+                document.getElementById('medicine-list').innerHTML = `
+                    <div class="error-state">
+                        <div class="error-icon">❌</div>
+                        <p>Failed to load medicines</p>
+                        <button class="retry-btn" onclick="loadMedicines()">Try Again</button>
+                    </div>
+                `;
+            }
+        }
+
+        // Display medicines
+        function displayMedicines() {
+            const medicineList = document.getElementById('medicine-list');
+            
+            if (medicines.length === 0) {
+                medicineList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💊</div>
+                        <h3>No medicines scheduled</h3>
+                        <p>You don't have any medicines for today</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const currentTime = new Date().toTimeString().slice(0, 5);
+            
+            let html = '';
+            medicines.forEach(medicine => {
+                const isToday = medicine.start_date <= today && medicine.end_date >= today;
+                if (!isToday) return;
+
+                medicine.times.forEach(time => {
+                    const isPast = time < currentTime;
+                    const status = getMedicineStatus(medicine.id, time);
+                    
+                    html += `
+                        <div class="medicine-item ${status}">
+                            <div class="medicine-icon">💊</div>
+                            <div class="medicine-details">
+                                <h4>${medicine.medicine_name}</h4>
+                                <p class="medicine-time">🕐 ${time}</p>
+                                <p class="medicine-dosage">${medicine.dosage}</p>
+                            </div>
+                            <div class="medicine-status">
+                                ${getStatusBadge(status)}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            medicineList.innerHTML = html || `
+                <div class="empty-state">
+                    <div class="empty-icon">💊</div>
+                    <h3>No medicines for today</h3>
+                    <p>Enjoy your medicine-free day!</p>
+                </div>
+            `;
+        }
+
+        // Get status badge
+        function getStatusBadge(status) {
+            const badges = {
+                'taken': '<span class="badge success">✅ Taken</span>',
+                'pending': '<span class="badge pending">⏰ Pending</span>',
+                'missed': '<span class="badge missed">❌ Missed</span>'
+            };
+            return badges[status] || badges['pending'];
+        }
+
+        // Load suggestions
+        async function loadSuggestions() {
+            try {
+                const response = await fetch(`${API_BASE}/medicine/suggestions/${currentElderlyId}`);
+                const data = await response.json();
+                suggestions = data.suggestions || [];
+                displaySuggestions();
+            } catch (error) {
+                console.error('Error loading suggestions:', error);
+                document.getElementById('suggestions-list').innerHTML = `
+                    <div class="error-state">
+                        <div class="error-icon">❌</div>
+                        <p>Failed to load suggestions</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display suggestions
+        function displaySuggestions() {
+            const suggestionsList = document.getElementById('suggestions-list');
+            
+            if (suggestions.length === 0) {
+                suggestionsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">📝</div>
+                        <h3>No suggestions</h3>
+                        <p>Your guardian hasn't added any suggestions yet</p>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            suggestions.forEach(suggestion => {
+                html += `
+                    <div class="suggestion-item">
+                        <div class="suggestion-icon">📝</div>
+                        <div class="suggestion-content">
+                            <h4>${suggestion.title || 'Health Suggestion'}</h4>
+                            <p>${suggestion.message}</p>
+                            <p class="suggestion-time">🕐 ${suggestion.timestamp}</p>
+                        </div>
+                    </div>
+                `;
+            });
+
+            suggestionsList.innerHTML = html;
+        }
+
+        // Update status summary
+        function updateStatusSummary() {
+            const today = new Date().toISOString().split('T')[0];
+            const currentTime = new Date().toTimeString().slice(0, 5);
+            
+            let total = 0, taken = 0, pending = 0;
+            
+            medicines.forEach(medicine => {
+                const isToday = medicine.start_date <= today && medicine.end_date >= today;
+                if (!isToday) return;
+                
+                medicine.times.forEach(time => {
+                    total++;
+                    const status = getMedicineStatus(medicine.id, time);
+                    if (status === 'taken') taken++;
+                    else if (status === 'pending') pending++;
+                });
+            });
+
+            document.getElementById('total-medicines').textContent = total;
+            document.getElementById('taken-medicines').textContent = taken;
+            document.getElementById('pending-medicines').textContent = pending;
+        }
+
+        // Get medicine status
+        function getMedicineStatus(medicineId, time) {
+            const key = `${medicineId}_${time}`;
+            const status = localStorage.getItem(`medicine_${key}`);
+            return status || 'pending';
+        }
+
+        // Medicine reminder checker
+        function startMedicineReminderChecker() {
+            setInterval(() => {
+                const currentTime = new Date().toTimeString().slice(0, 5);
+                medicines.forEach(medicine => {
+                    medicine.times.forEach(time => {
+                        if (time === currentTime) {
+                            showMedicineReminder(medicine, time);
+                        }
+                    });
+                });
+            }, 30000); // Check every 30 seconds
+        }
+
+        // Show medicine reminder
+        function showMedicineReminder(medicine, time) {
+            const modal = document.getElementById('medicine-modal');
+            document.getElementById('medicine-name').textContent = medicine.medicine_name;
+            document.getElementById('medicine-time').textContent = `Time: ${time}`;
+            document.getElementById('medicine-dosage').textContent = `Dosage: ${medicine.dosage}`;
+            
+            modal.classList.add('active');
+            
+            // Play notification sound if available
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(`Medicine reminder: ${medicine.medicine_name} at ${time}`);
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // Close modal
+        function closeMedicineModal() {
+            document.getElementById('medicine-modal').classList.remove('active');
+        }
+
+        // Confirm medicine
+        async function confirmMedicine(taken) {
+            const medicineName = document.getElementById('medicine-name').textContent;
+            const medicineTime = document.getElementById('medicine-time').textContent.replace('Time: ', '');
+            
+            // Find medicine ID
+            const medicine = medicines.find(m => m.medicine_name === medicineName);
+            if (medicine) {
+                const key = `${medicine.id}_${medicineTime}`;
+                localStorage.setItem(`medicine_${key}`, taken ? 'taken' : 'missed');
+                
+                // Update backend
+                try {
+                    await fetch(`${API_BASE}/medicine/confirm`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            elderly_id: currentElderlyId,
+                            medicine_id: medicine.id,
+                            time: medicineTime,
+                            taken: taken
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error confirming medicine:', error);
+                }
+                
+                // Refresh display
+                loadMedicines();
+            }
+            
+            closeMedicineModal();
+        }
+
+        // Snooze medicine
+        function snoozeMedicine() {
+            // Snooze for 5 minutes
+            setTimeout(() => {
+                const medicineName = document.getElementById('medicine-name').textContent;
+                const medicine = medicines.find(m => m.medicine_name === medicineName);
+                if (medicine) {
+                    const medicineTime = document.getElementById('medicine-time').textContent.replace('Time: ', '');
+                    showMedicineReminder(medicine, medicineTime);
+                }
+            }, 5 * 60 * 1000);
+            
+            closeMedicineModal();
+        }
+
+        // Go back
+        function goBack() {
+            window.history.back();
+        }
+    </script>
+
+    <style>
+        /* Health Page Specific Styles */
+        .health-overview {
+            margin: 1.5rem 0;
+        }
+
+        .status-cards {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+            padding: 0 1rem;
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem 1rem;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .status-card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-number {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .card-label {
+            font-size: 0.875rem;
+            opacity: 0.9;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-header h2 {
+            font-size: 1.25rem;
+            color: #333;
+            margin: 0;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 8px;
+            transition: background 0.3s;
+        }
+
+        .refresh-btn:hover {
+            background: rgba(102, 126, 234, 0.1);
+        }
+
+        .medicine-list, .suggestions-list {
+            padding: 0 1rem;
+        }
+
+        .medicine-item, .suggestion-item {
+            background: white;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            transition: transform 0.3s;
+        }
+
+        .medicine-item:hover, .suggestion-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .medicine-icon, .suggestion-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .medicine-details, .suggestion-content {
+            flex: 1;
+        }
+
+        .medicine-details h4, .suggestion-content h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+        }
+
+        .medicine-time, .medicine-dosage, .suggestion-time {
+            margin: 0.25rem 0;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .medicine-status {
+            flex-shrink: 0;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .badge.success {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .badge.pending {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .badge.missed {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading-state, .error-state, .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: #666;
+        }
+
+        .loading-spinner, .error-icon, .empty-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .retry-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            margin-top: 1rem;
+            cursor: pointer;
+        }
+
+        .health-tips {
+            margin: 2rem 0;
+            padding: 0 1rem;
+        }
+
+        .tips-list {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .tip-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 12px;
+            padding: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        .tip-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .tip-content h4 {
+            margin: 0 0 0.25rem 0;
+            color: #333;
+        }
+
+        .tip-content p {
+            margin: 0;
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            margin: 1rem;
+            max-width: 400px;
+            width: 100%;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 16px 16px 0 0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0.25rem;
+        }
+
+        .modal-body {
+            padding: 1.5rem;
+        }
+
+        .medicine-info {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .medicine-info h4 {
+            margin: 0 0 0.5rem 0;
+            color: #333;
+            font-size: 1.25rem;
+        }
+
+        .medicine-info p {
+            margin: 0.25rem 0;
+            color: #666;
+        }
+
+        .reminder-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 0.75rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.25rem;
+            transition: transform 0.2s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+        }
+
+        .action-btn.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .action-btn.warning {
+            background: #ffc107;
+            color: #333;
+        }
+
+        .action-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-icon {
+            font-size: 1.25rem;
+        }
+
+        .btn-text {
+            font-size: 0.875rem;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .status-cards {
+                grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+            
+            .reminder-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</body>
+</html>

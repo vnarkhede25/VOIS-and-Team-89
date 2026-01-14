@@ -1,0 +1,17 @@
+{
+  "isha_amit": [
+    {
+      "id": 1,
+      "medicine_name": "paracetamol",
+      "dosage": "1",
+      "times": [
+        "2"
+      ],
+      "instructions": "after meal",
+      "start_date": "2026-01-09",
+      "end_date": "2026-01-11",
+      "created_at": "2026-01-09T18:54:39.578272",
+      "active": true
+    }
+  ]
+}

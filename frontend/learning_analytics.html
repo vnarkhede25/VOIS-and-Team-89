@@ -1,0 +1,703 @@
+"""
+Frontend Integration for Continuous Learning System
+
+Provides web interface for:
+- Viewing learning insights and analytics
+- Submitting feedback for model improvement
+- Monitoring model performance
+- Managing patient-specific models
+"""
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Learning Analytics - Elderly Monitoring</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .dashboard-container {
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            transition: transform 0.3s ease;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        .card-header {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            font-weight: 600;
+        }
+        .metric-card {
+            text-align: center;
+            padding: 20px;
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #667eea;
+        }
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .performance-indicator {
+            width: 100%;
+            height: 8px;
+            border-radius: 4px;
+            background: #e9ecef;
+            margin: 10px 0;
+        }
+        .performance-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        .performance-good { background: #28a745; }
+        .performance-warning { background: #ffc107; }
+        .performance-danger { background: #dc3545; }
+        .feedback-btn {
+            border-radius: 25px;
+            padding: 10px 20px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .feedback-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        .insight-item {
+            padding: 15px;
+            border-left: 4px solid #667eea;
+            margin: 10px 0;
+            background: #f8f9fa;
+            border-radius: 0 8px 8px 0;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin: 20px 0;
+        }
+        .patient-selector {
+            border-radius: 10px;
+            border: 2px solid #667eea;
+            padding: 10px;
+            font-weight: 600;
+        }
+        .alert-feedback {
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .model-status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .status-trained { background: #d4edda; color: #155724; }
+        .status-training { background: #fff3cd; color: #856404; }
+        .status-not-trained { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="card mb-4">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <h2 class="mb-0">
+                            <i class="fas fa-brain me-2"></i>Learning Analytics Dashboard
+                        </h2>
+                        <p class="text-muted mb-0">Continuous Learning & Model Improvement</p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <select id="patientSelector" class="form-select patient-selector">
+                            <option value="">Select Patient...</option>
+                        </select>
+                        <button class="btn btn-primary ms-2" onclick="refreshData()">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Key Metrics -->
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value" id="totalDataPoints">0</div>
+                        <div class="metric-label">Total Data Points</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value" id="accuracyRate">0%</div>
+                        <div class="metric-label">Accuracy Rate</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value" id="feedbackRate">0%</div>
+                        <div class="metric-label">Feedback Rate</div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card metric-card">
+                    <div class="card-body">
+                        <div class="metric-value" id="modelStatus">
+                            <span class="model-status status-not-trained">Not Trained</span>
+                        </div>
+                        <div class="metric-label">Model Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Charts -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-line me-2"></i>Accuracy Trend
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="accuracyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-chart-bar me-2"></i>Feature Importance
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
+                            <canvas id="featureChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-tachometer-alt me-2"></i>Performance Metrics
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Precision</span>
+                                <span id="precisionValue">0%</span>
+                            </div>
+                            <div class="performance-indicator">
+                                <div class="performance-fill performance-good" id="precisionBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>Recall</span>
+                                <span id="recallValue">0%</span>
+                            </div>
+                            <div class="performance-indicator">
+                                <div class="performance-fill performance-good" id="recallBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>False Positive Rate</span>
+                                <span id="falsePositiveValue">0%</span>
+                            </div>
+                            <div class="performance-indicator">
+                                <div class="performance-fill performance-good" id="falsePositiveBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span>False Negative Rate</span>
+                                <span id="falseNegativeValue">0%</span>
+                            </div>
+                            <div class="performance-indicator">
+                                <div class="performance-fill performance-good" id="falseNegativeBar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">
+                            <i class="fas fa-lightbulb me-2"></i>Improvement Suggestions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="suggestionsContainer">
+                            <div class="text-center text-muted">
+                                <i class="fas fa-spinner fa-spin me-2"></i>Loading suggestions...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Feedback -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-comments me-2"></i>Recent Learning Feedback
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="feedbackContainer">
+                    <div class="text-center text-muted">
+                        <i class="fas fa-spinner fa-spin me-2"></i>Loading feedback data...
+                    </div>
+                </div>
+                <div class="text-center mt-3">
+                    <button class="btn btn-success feedback-btn" onclick="showFeedbackModal()">
+                        <i class="fas fa-plus me-2"></i>Add Feedback
+                    </button>
+                    <button class="btn btn-warning feedback-btn ms-2" onclick="triggerRetraining()">
+                        <i class="fas fa-redo me-2"></i>Retrain Model
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div class="modal fade" id="feedbackModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-comment-dots me-2"></i>Add Learning Feedback
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="feedbackForm">
+                        <div class="mb-3">
+                            <label class="form-label">Data Point ID</label>
+                            <input type="text" class="form-control" id="dataPointId" required>
+                            <div class="form-text">Enter the ID of the detection you want to provide feedback for</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Actual Outcome</label>
+                            <select class="form-select" id="actualOutcome" required>
+                                <option value="">Select outcome...</option>
+                                <option value="fall_detected">Fall Detected</option>
+                                <option value="no_fall">No Fall</option>
+                                <option value="false_alarm">False Alarm</option>
+                                <option value="missed_fall">Missed Fall</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Was the Detection Correct?</label>
+                            <div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="correct" id="correctYes" value="true" required>
+                                    <label class="form-check-label" for="correctYes">
+                                        <i class="fas fa-check-circle text-success me-1"></i>Correct
+                                    </label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="correct" id="correctNo" value="false" required>
+                                    <label class="form-check-label" for="correctNo">
+                                        <i class="fas fa-times-circle text-danger me-1"></i>Incorrect
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Additional Comments</label>
+                            <textarea class="form-control" id="feedbackComments" rows="3" placeholder="Optional comments about this detection..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="submitFeedback()">
+                        <i class="fas fa-paper-plane me-2"></i>Submit Feedback
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const API_BASE = 'http://localhost:5001/api';
+        let currentPatient = '';
+        let accuracyChart = null;
+        let featureChart = null;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadPatients();
+            setupCharts();
+            refreshData();
+        });
+
+        // Load patient list
+        async function loadPatients() {
+            try {
+                const response = await fetch(`${API_BASE}/learning/status`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    const selector = document.getElementById('patientSelector');
+                    selector.innerHTML = '<option value="">Select Patient...</option>';
+                    
+                    // Add patients (in real app, this would come from patient management)
+                    for (let i = 1; i <= 5; i++) {
+                        const option = document.createElement('option');
+                        option.value = `patient_${i}`;
+                        option.textContent = `Patient ${i}`;
+                        selector.appendChild(option);
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading patients:', error);
+            }
+        }
+
+        // Setup charts
+        function setupCharts() {
+            // Accuracy trend chart
+            const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+            accuracyChart = new Chart(accuracyCtx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Accuracy %',
+                        data: [],
+                        borderColor: '#667eea',
+                        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100
+                        }
+                    }
+                }
+            });
+
+            // Feature importance chart
+            const featureCtx = document.getElementById('featureChart').getContext('2d');
+            featureChart = new Chart(featureCtx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Importance',
+                        data: [],
+                        backgroundColor: '#764ba2'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        // Refresh all data
+        async function refreshData() {
+            const patientId = document.getElementById('patientSelector').value;
+            if (!patientId) {
+                showNotification('Please select a patient', 'warning');
+                return;
+            }
+
+            currentPatient = patientId;
+            await Promise.all([
+                loadPatientInsights(patientId),
+                loadPatientPerformance(patientId),
+                loadGlobalInsights()
+            ]);
+        }
+
+        // Load patient insights
+        async function loadPatientInsights(patientId) {
+            try {
+                const response = await fetch(`${API_BASE}/learning/insights/${patientId}`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateMetrics(data.insights);
+                    updateSuggestions(data.insights.improvement_suggestions || []);
+                }
+            } catch (error) {
+                console.error('Error loading patient insights:', error);
+            }
+        }
+
+        // Load patient performance
+        async function loadPatientPerformance(patientId) {
+            try {
+                const response = await fetch(`${API_BASE}/learning/performance/${patientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.performance) {
+                    updatePerformanceMetrics(data.performance);
+                }
+            } catch (error) {
+                console.error('Error loading performance:', error);
+            }
+        }
+
+        // Load global insights
+        async function loadGlobalInsights() {
+            try {
+                const response = await fetch(`${API_BASE}/learning/insights/global`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    updateFeatureChart(data.insights.feature_importance || {});
+                    updateAccuracyChart(data.insights.improvement_trends || {});
+                }
+            } catch (error) {
+                console.error('Error loading global insights:', error);
+            }
+        }
+
+        // Update metrics display
+        function updateMetrics(insights) {
+            document.getElementById('totalDataPoints').textContent = insights.total_data_points || 0;
+            document.getElementById('accuracyRate').textContent = `${Math.round((insights.accuracy || 0) * 100)}%`;
+            document.getElementById('feedbackRate').textContent = `${Math.round((insights.feedback_rate || 0) * 100)}%`;
+            
+            // Update model status
+            const modelStatus = document.getElementById('modelStatus');
+            if (insights.accuracy > 0.8) {
+                modelStatus.innerHTML = '<span class="model-status status-trained">Trained</span>';
+            } else if (insights.accuracy > 0.5) {
+                modelStatus.innerHTML = '<span class="model-status status-training">Training</span>';
+            } else {
+                modelStatus.innerHTML = '<span class="model-status status-not-trained">Not Trained</span>';
+            }
+        }
+
+        // Update performance metrics
+        function updatePerformanceMetrics(performance) {
+            const precision = Math.round(performance.precision * 100);
+            const recall = Math.round(performance.recall * 100);
+            const falsePositiveRate = Math.round(performance.false_positive_rate * 100);
+            const falseNegativeRate = Math.round(performance.false_negative_rate * 100);
+
+            document.getElementById('precisionValue').textContent = `${precision}%`;
+            document.getElementById('recallValue').textContent = `${recall}%`;
+            document.getElementById('falsePositiveValue').textContent = `${falsePositiveRate}%`;
+            document.getElementById('falseNegativeValue').textContent = `${falseNegativeRate}%`;
+
+            // Update progress bars
+            updateProgressBar('precisionBar', precision);
+            updateProgressBar('recallBar', recall);
+            updateProgressBar('falsePositiveBar', 100 - falsePositiveRate);
+            updateProgressBar('falseNegativeBar', 100 - falseNegativeRate);
+        }
+
+        // Update progress bar
+        function updateProgressBar(barId, percentage) {
+            const bar = document.getElementById(barId);
+            if (bar) {
+                bar.style.width = `${percentage}%`;
+                
+                // Update color based on performance
+                bar.className = 'performance-fill';
+                if (percentage >= 80) {
+                    bar.classList.add('performance-good');
+                } else if (percentage >= 60) {
+                    bar.classList.add('performance-warning');
+                } else {
+                    bar.classList.add('performance-danger');
+                }
+            }
+        }
+
+        // Update suggestions
+        function updateSuggestions(suggestions) {
+            const container = document.getElementById('suggestionsContainer');
+            
+            if (suggestions.length === 0) {
+                container.innerHTML = '<div class="text-center text-muted">No suggestions available</div>';
+                return;
+            }
+
+            container.innerHTML = suggestions.map(suggestion => 
+                `<div class="insight-item">
+                    <i class="fas fa-lightbulb text-warning me-2"></i>
+                    ${suggestion}
+                </div>`
+            ).join('');
+        }
+
+        // Update feature chart
+        function updateFeatureChart(featureImportance) {
+            if (!featureChart) return;
+
+            const features = Object.keys(featureImportance).slice(0, 10);
+            const values = features.map(f => featureImportance[f]);
+
+            featureChart.data.labels = features.map(f => f.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()));
+            featureChart.data.datasets[0].data = values;
+            featureChart.update();
+        }
+
+        // Update accuracy chart
+        function updateAccuracyChart(trends) {
+            if (!accuracyChart) return;
+
+            const weeks = Object.keys(trends).sort();
+            const accuracies = weeks.map(w => Math.round(trends[w] * 100));
+
+            accuracyChart.data.labels = weeks.map(w => w.replace('week_', 'Week '));
+            accuracyChart.data.datasets[0].data = accuracies;
+            accuracyChart.update();
+        }
+
+        // Show feedback modal
+        function showFeedbackModal() {
+            if (!currentPatient) {
+                showNotification('Please select a patient first', 'warning');
+                return;
+            }
+            
+            const modal = new bootstrap.Modal(document.getElementById('feedbackModal'));
+            modal.show();
+        }
+
+        // Submit feedback
+        async function submitFeedback() {
+            const form = document.getElementById('feedbackForm');
+            const formData = new FormData(form);
+            
+            const feedbackData = {
+                data_point_id: document.getElementById('dataPointId').value,
+                actual_outcome: document.getElementById('actualOutcome').value,
+                correct: document.querySelector('input[name="correct"]:checked')?.value === 'true'
+            };
+
+            try {
+                const response = await fetch(`${API_BASE}/learning/feedback/${currentPatient}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(feedbackData)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification('Feedback submitted successfully!', 'success');
+                    bootstrap.Modal.getInstance(document.getElementById('feedbackModal')).hide();
+                    form.reset();
+                    refreshData();
+                } else {
+                    showNotification('Failed to submit feedback', 'error');
+                }
+            } catch (error) {
+                console.error('Error submitting feedback:', error);
+                showNotification('Error submitting feedback', 'error');
+            }
+        }
+
+        // Trigger retraining
+        async function triggerRetraining() {
+            if (!currentPatient) {
+                showNotification('Please select a patient first', 'warning');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/learning/retrain/${currentPatient}`, {
+                    method: 'POST'
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showNotification(result.message, 'success');
+                } else {
+                    showNotification(result.message || 'Retraining failed', 'warning');
+                }
+            } catch (error) {
+                console.error('Error triggering retraining:', error);
+                showNotification('Error triggering retraining', 'error');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SilverCare - Senior Safety Companion</title>
+    <link rel="stylesheet" href="senior_styles.css">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="SilverCare">
+    <link rel="apple-touch-icon" href="icons/icon-192x192.png">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="status-indicator">
+                <div class="status-dot online" id="connectionStatus"></div>
+                <span class="status-text">Connected</span>
+            </div>
+            <div class="language-selector">
+                <select id="languageSelect" onchange="changeLanguage()">
+                    <option value="english">English</option>
+                    <option value="hindi">हिंदी</option>
+                    <option value="marathi">मराठी</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- Welcome Section -->
+        <section class="welcome-section">
+            <div class="welcome-content">
+                <h1 id="welcomeMessage">Welcome!</h1>
+                <div class="risk-display">
+                    <span class="risk-label">Risk Level:</span>
+                    <span class="risk-badge" id="riskLevel">LOW</span>
+                </div>
+                <div class="emergency-contact" id="emergencyContact">
+                    <div class="contact-info">
+                        <span class="contact-label">Emergency Contact:</span>
+                        <span class="contact-name" id="contactName">Loading...</span>
+                    </div>
+                    <span class="contact-phone" id="contactPhone">Loading...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- SOS Button -->
+        <section class="sos-section">
+            <button class="sos-button" id="sosButton">
+                <div class="sos-icon">🚨</div>
+                <div class="sos-text">SOS</div>
+                <div class="sos-subtext">HOLD FOR HELP</div>
+            </button>
+            <p class="sos-instruction">Press and hold for 3 seconds to call for help</p>
+        </section>
+
+        <!-- Status Display -->
+        <section class="status-section">
+            <div class="status-card" id="statusCard">
+                <div class="status-icon" id="statusIcon">🟢</div>
+                <div class="status-info">
+                    <div class="status-text" id="statusText">Safe</div>
+                    <div class="status-description" id="statusDescription">Everything is normal</div>
+                    <div class="status-time" id="statusTime">Last check: Just now</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quick Actions -->
+        <section class="quick-actions">
+            <h2>Quick Actions</h2>
+            <div class="action-grid">
+                <button class="action-btn" onclick="openHealth()">
+                    <div class="btn-icon">❤️</div>
+                    <div class="btn-text">Health</div>
+                    <div class="btn-subtitle">Vitals & Status</div>
+                </button>
+                <button class="action-btn" onclick="openMedicines()">
+                    <div class="btn-icon">💊</div>
+                    <div class="btn-text">Medicines</div>
+                    <div class="btn-subtitle">Reminders</div>
+                </button>
+                <button class="action-btn" onclick="openReminders()">
+                    <div class="btn-icon">⏰</div>
+                    <div class="btn-text">Reminders</div>
+                    <div class="btn-subtitle">Daily Tasks</div>
+                </button>
+                <button class="action-btn" onclick="openAssistant()">
+                    <div class="btn-icon">💬</div>
+                    <div class="btn-text">Assistant</div>
+                    <div class="btn-subtitle">Chat & Help</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Today's Overview -->
+        <section class="overview-section">
+            <h2>Today's Overview</h2>
+            <div class="overview-cards">
+                <div class="overview-card">
+                    <div class="card-icon">💊</div>
+                    <div class="card-number" id="medicineCount">0</div>
+                    <div class="card-label">Medicines Today</div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">✅</div>
+                    <div class="card-number" id="takenCount">0</div>
+                    <div class="card-label">Taken</div>
+                </div>
+                <div class="overview-card">
+                    <div class="card-icon">🚶</div>
+                    <div class="card-number" id="activityCount">0</div>
+                    <div class="card-label">Activities</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Medicine Reminder -->
+        <section class="medicine-reminder" id="medicineReminder" style="display: none;">
+            <div class="reminder-header">
+                <div class="reminder-icon">💊</div>
+                <div class="reminder-title">Medicine Reminder</div>
+            </div>
+            <div class="reminder-content">
+                <div class="medicine-info">
+                    <div class="medicine-name" id="medicineName">--</div>
+                    <div class="medicine-time" id="medicineTime">--</div>
+                    <div class="medicine-dosage" id="medicineDosage">--</div>
+                </div>
+                <div class="reminder-actions">
+                    <button class="action-btn success" onclick="confirmMedicine(true)">
+                        <span>✅ Taken</span>
+                    </button>
+                    <button class="action-btn warning" onclick="confirmMedicine(false)">
+                        <span>❌ Skip</span>
+                    </button>
+                    <button class="action-btn secondary" onclick="snoozeMedicine()">
+                        <span>⏰ Snooze</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Health Tips -->
+        <section class="tips-section">
+            <h2>Daily Health Tips</h2>
+            <div class="tips-carousel">
+                <div class="tip-card active">
+                    <div class="tip-icon">💧</div>
+                    <div class="tip-content">
+                        <h4>Stay Hydrated</h4>
+                        <p>Drink at least 8 glasses of water daily for better health</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">🚶</div>
+                    <div class="tip-content">
+                        <h4>Daily Walk</h4>
+                        <p>Take a 15-minute walk for better circulation and mood</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">😴</div>
+                    <div class="tip-content">
+                        <h4>Good Sleep</h4>
+                        <p>Aim for 7-8 hours of quality sleep for recovery</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Alert Panel -->
+        <section class="alert-panel" id="alertPanel">
+            <div class="alert-content">
+                <div class="alert-icon">⚠️</div>
+                <div class="alert-message" id="alertMessage">Alert detected!</div>
+                <div class="alert-actions">
+                    <button class="alert-btn cancel" onclick="cancelAlert()">I'm Okay</button>
+                    <button class="alert-btn help" onclick="requestHelp()">Need Help</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="#" class="nav-item active">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <button class="nav-item" onclick="openHealth()">
+                <div class="nav-icon">❤️</div>
+                <span>Health</span>
+            </button>
+            <button class="nav-item" onclick="openMedicines()">
+                <div class="nav-icon">💊</div>
+                <span>Medicines</span>
+            </button>
+            <button class="nav-item" onclick="openAssistant()">
+                <div class="nav-icon">💬</div>
+                <span>Assistant</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let patientId = null;
+        let sosTimer = null;
+        let currentLanguage = 'english';
+        let medicines = [];
+        let alertTimeout = null;
+
+        // Language translations
+        const translations = {
+            english: {
+                welcome: 'Welcome!',
+                riskLevel: 'Risk Level:',
+                emergencyContact: 'Emergency Contact:',
+                safe: 'Safe',
+                normal: 'Everything is normal',
+                lastCheck: 'Last check: Just now',
+                sosText: 'HOLD FOR HELP',
+                sosInstruction: 'Press and hold for 3 seconds to call for help',
+                quickActions: 'Quick Actions',
+                health: 'Health',
+                vitals: 'Vitals & Status',
+                medicines: 'Medicines',
+                reminders: 'Reminders',
+                dailyTasks: 'Daily Tasks',
+                assistant: 'Assistant',
+                chatHelp: 'Chat & Help',
+                todayOverview: 'Today\'s Overview',
+                medicinesToday: 'Medicines Today',
+                taken: 'Taken',
+                activities: 'Activities',
+                medicineReminder: 'Medicine Reminder',
+                takenBtn: 'Taken',
+                skipBtn: 'Skip',
+                snoozeBtn: 'Snooze',
+                healthTips: 'Daily Health Tips',
+                alertDetected: 'Alert detected!',
+                imOkay: 'I\'m Okay',
+                needHelp: 'Need Help'
+            },
+            hindi: {
+                welcome: 'स्वागत है!',
+                riskLevel: 'जोखिम स्तर:',
+                emergencyContact: 'आपातकालीन संपर्क:',
+                safe: 'सुरक्षित',
+                normal: 'सब कुछ सामान्य है',
+                lastCheck: 'अंतिम जांच: अभी',
+                sosText: 'मदद के लिए दबाएं',
+                sosInstruction: 'मदद बुलाने के लिए 3 सेकंड तक दबाकर रखें',
+                quickActions: 'त्वरित कार्य',
+                health: 'स्वास्थ्य',
+                vitals: 'वाइटल और स्थिति',
+                medicines: 'दवाएं',
+                reminders: ' अनुस्मारक',
+                dailyTasks: 'दैनिक कार्य',
+                assistant: 'सहायक',
+                chatHelp: 'चैट और सहायता',
+                todayOverview: 'आज का अवलोकन',
+                medicinesToday: 'आज की दवाएं',
+                taken: 'ली गई',
+                activities: 'गतिविधियां',
+                medicineReminder: 'दवा अनुस्मारक',
+                takenBtn: 'ली गई',
+                skipBtn: 'छोड़ें',
+                snoozeBtn: 'स्नूज़',
+                healthTips: 'दैनिक स्वास्थ्य टिप्स',
+                alertDetected: 'चेतावनी मिली!',
+                imOkay: 'मैं ठीक हूं',
+                needHelp: 'मुझे मदद चाहिए'
+            },
+            marathi: {
+                welcome: 'स्वागत आहे!',
+                riskLevel: 'धोकाचे स्तर:',
+                emergencyContact: 'आपत्कालीन संपर्क:',
+                safe: 'सुरक्षित',
+                normal: 'सर्व काही सामान्य आहे',
+                lastCheck: 'शेवटची तपासणी: आत्ता',
+                sosText: 'मदतीसाठी दाबा',
+                sosInstruction: 'मदत मिळवण्यासाठी 3 सेकंद दाबून ठेवा',
+                quickActions: 'जलद क्रिया',
+                health: 'आरोग्य',
+                vitals: 'व्हायटल आणि स्थिती',
+                medicines: 'औषधे',
+                reminders: 'स्मरणपत्र',
+                dailyTasks: 'दैनिक कार्ये',
+                assistant: 'सहायक',
+                chatHelp: 'चॅट आणि मदत',
+                todayOverview: 'आजचे आढाव',
+                medicinesToday: 'आजची औषधे',
+                taken: 'घेतले',
+                activities: 'क्रियाकलाप',
+                medicineReminder: 'औषध स्मरणपत्र',
+                takenBtn: 'घेतले',
+                skipBtn: 'वगळा',
+                snoozeBtn: 'स्नूज़',
+                healthTips: 'दैनिक आरोग्य टिप्स',
+                alertDetected: 'चेतावनी मिळाली!',
+                imOkay: 'मी ठीक आहे',
+                needHelp: 'मला मदत हवी'
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            initializeApp();
+            startStatusMonitoring();
+            checkMedicineReminders();
+            initializeTipsCarousel();
+        });
+
+        // Check authentication
+        function checkAuthentication() {
+            patientId = localStorage.getItem('currentPatientId');
+            const patientName = localStorage.getItem('patientName');
+            
+            if (!patientId) {
+                window.location.href = 'onboarding.html';
+                return;
+            }
+            
+            updateWelcomeMessage(patientName);
+            loadPatientData();
+        }
+
+        // Initialize app
+        function initializeApp() {
+            // Set current language
+            currentLanguage = localStorage.getItem('language') || 'english';
+            document.getElementById('languageSelect').value = currentLanguage;
+            
+            // Initialize SOS button
+            initializeSOSButton();
+            
+            // Update time
+            updateTime();
+            setInterval(updateTime, 1000);
+        }
+
+        // Load patient data
+        async function loadPatientData() {
+            try {
+                const response = await fetch(`${API_BASE}/patients/${patientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.patient) {
+                    const patient = data.patient;
+                    
+                    // Update risk level
+                    if (patient.risk_assessment) {
+                        updateRiskDisplay(patient.risk_assessment);
+                    }
+                    
+                    // Update emergency contact
+                    if (patient.emergency_contacts && patient.emergency_contacts.length > 0) {
+                        const primaryContact = patient.emergency_contacts.find(c => c.primary);
+                        if (primaryContact) {
+                            document.getElementById('contactName').textContent = primaryContact.name;
+                            document.getElementById('contactPhone').textContent = primaryContact.phone;
+                        }
+                    }
+                    
+                    // Update language preference
+                    if (patient.language) {
+                        currentLanguage = patient.language;
+                        document.getElementById('languageSelect').value = currentLanguage;
+                    }
+                    
+                    // Load medicines
+                    loadMedicines();
+                }
+            } catch (error) {
+                console.log('Could not load patient data');
+            }
+        }
+
+        // Update welcome message
+        function updateWelcomeMessage(name) {
+            const welcomeText = translations[currentLanguage].welcome;
+            document.getElementById('welcomeMessage').textContent = `${welcomeText}, ${name}!`;
+        }
+
+        // Initialize SOS button
+        function initializeSOSButton() {
+            const sosButton = document.getElementById('sosButton');
+            
+            // Mouse events
+            sosButton.addEventListener('mousedown', startSOS);
+            sosButton.addEventListener('mouseup', cancelSOS);
+            sosButton.addEventListener('mouseleave', cancelSOS);
+            
+            // Touch events for mobile
+            sosButton.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startSOS();
+            });
+            sosButton.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                cancelSOS();
+            });
+        }
+
+        // SOS functionality
+        function startSOS() {
+            sosTimer = setTimeout(() => {
+                triggerEmergency();
+            }, 3000);
+            
+            // Visual feedback
+            const sosButton = document.getElementById('sosButton');
+            sosButton.style.transform = 'scale(0.95)';
+        }
+
+        function cancelSOS() {
+            if (sosTimer) {
+                clearTimeout(sosTimer);
+                sosTimer = null;
+            }
+            
+            // Reset visual
+            const sosButton = document.getElementById('sosButton');
+            sosButton.style.transform = 'scale(1)';
+        }
+
+        async function triggerEmergency() {
+            try {
+                const response = await fetch(`${API_BASE}/fall/detect`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: patientId,
+                        device_id: 'manual_sos',
+                        confidence: 1.0,
+                        emergency_type: 'manual_sos',
+                        location: { latitude: 0, longitude: 0 },
+                        medical_info: { notes: 'Manual SOS triggered' }
+                    })
+                });
+                
+                if (response.ok) {
+                    showAlert(translations[currentLanguage].alertDetected);
+                    updateStatus('alert', '🚨', 'Emergency Alert', 'Help is on the way');
+                }
+            } catch (error) {
+                console.log('Error triggering emergency:', error);
+                showAlert('Emergency alert failed. Try calling your guardian directly.');
+            }
+        }
+
+        // Status monitoring
+        function startStatusMonitoring() {
+            setInterval(() => {
+                updateDeviceStatus();
+            }, 30000); // Check every 30 seconds
+        }
+
+        function updateDeviceStatus() {
+            // Simulate device status
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const statusDescription = document.getElementById('statusDescription');
+            const statusTime = document.getElementById('statusTime');
+            
+            // Random status updates for demo
+            const statuses = [
+                { icon: '🟢', text: 'Safe', description: 'Everything is normal' },
+                { icon: '🟡', text: 'Monitoring', description: 'Activity detected' },
+                { icon: '🟢', text: 'Active', description: 'Moving around' }
+            ];
+            
+            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
+            statusIcon.textContent = randomStatus.icon;
+            statusText.textContent = randomStatus.text;
+            statusDescription.textContent = randomStatus.description;
+            statusTime.textContent = `Last check: ${new Date().toLocaleTimeString()}`;
+        }
+
+        function updateStatus(status, icon, text, description) {
+            const statusCard = document.getElementById('statusCard');
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const statusDescription = document.getElementById('statusDescription');
+            
+            statusCard.className = `status-card ${status}`;
+            statusIcon.textContent = icon;
+            statusText.textContent = text;
+            statusDescription.textContent = description;
+        }
+
+        // Medicine management
+        async function loadMedicines() {
+            try {
+                const response = await fetch(`${API_BASE}/medicines/${patientId}`);
+                const data = await response.json();
+                
+                medicines = data.medicines || [];
+                updateMedicineOverview();
+            } catch (error) {
+                console.log('Could not load medicines');
+            }
+        }
+
+        function updateMedicineOverview() {
+            const today = new Date().toISOString().split('T')[0];
+            let totalCount = 0, takenCount = 0;
+            
+            medicines.forEach(medicine => {
+                if (medicine.start_date <= today && medicine.end_date >= today) {
+                    totalCount += medicine.times.length;
+                    medicine.times.forEach(time => {
+                        const status = getMedicineStatus(medicine.id, time);
+                        if (status === 'taken') takenCount++;
+                    });
+                }
+            });
+            
+            document.getElementById('medicineCount').textContent = totalCount;
+            document.getElementById('takenCount').textContent = takenCount;
+            document.getElementById('activityCount').textContent = Math.floor(Math.random() * 10) + 5; // Simulated activity
+        }
+
+        function getMedicineStatus(medicineId, time) {
+            const key = `${medicineId}_${time}`;
+            return localStorage.getItem(`medicine_${key}`) || 'pending';
+        }
+
+        function checkMedicineReminders() {
+            setInterval(() => {
+                const currentTime = new Date().toTimeString().slice(0, 5);
+                medicines.forEach(medicine => {
+                    medicine.times.forEach(time => {
+                        if (time === currentTime) {
+                            showMedicineReminder(medicine, time);
+                        }
+                    });
+                });
+            }, 60000); // Check every minute
+        }
+
+        function showMedicineReminder(medicine, time) {
+            const reminder = document.getElementById('medicineReminder');
+            document.getElementById('medicineName').textContent = medicine.name;
+            document.getElementById('medicineTime').textContent = time;
+            document.getElementById('medicineDosage').textContent = medicine.dosage;
+            
+            reminder.style.display = 'block';
+            
+            // Play notification sound
+            if ('speechSynthesis' in window) {
+                const utterance = new SpeechSynthesisUtterance(`Medicine reminder: ${medicine.name} at ${time}`);
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        async function confirmMedicine(taken) {
+            const medicineName = document.getElementById('medicineName').textContent;
+            const medicine = medicines.find(m => m.name === medicineName);
+            
+            if (medicine) {
+                const medicineTime = document.getElementById('medicineTime').textContent;
+                const key = `${medicine.id}_${medicineTime}`;
+                localStorage.setItem(`medicine_${key}`, taken ? 'taken' : 'skipped');
+                
+                // Update backend
+                try {
+                    await fetch(`${API_BASE}/medicines/confirm`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            patient_id: patientId,
+                            medicine_id: medicine.id,
+                            time: medicineTime,
+                            taken: taken
+                        })
+                    });
+                } catch (error) {
+                    console.log('Error confirming medicine:', error);
+                }
+                
+                updateMedicineOverview();
+            }
+            
+            document.getElementById('medicineReminder').style.display = 'none';
+        }
+
+        function snoozeMedicine() {
+            document.getElementById('medicineReminder').style.display = 'none';
+            setTimeout(() => {
+                const medicineName = document.getElementById('medicineName').textContent;
+                const medicine = medicines.find(m => m.name === medicineName);
+                if (medicine) {
+                    const medicineTime = document.getElementById('medicineTime').textContent;
+                    showMedicineReminder(medicine, medicineTime);
+                }
+            }, 5 * 60 * 1000); // Snooze for 5 minutes
+        }
+
+        // Risk display
+        function updateRiskDisplay(riskAssessment) {
+            const riskElement = document.getElementById('riskLevel');
+            riskElement.textContent = riskAssessment.level;
+            riskElement.className = `risk-badge ${riskAssessment.level.toLowerCase()}`;
+        }
+
+        // Alert functions
+        function showAlert(message) {
+            const alertPanel = document.getElementById('alertPanel');
+            document.getElementById('alertMessage').textContent = message;
+            alertPanel.style.display = 'block';
+            
+            clearTimeout(alertTimeout);
+            alertTimeout = setTimeout(() => {
+                alertPanel.style.display = 'none';
+            }, 5000);
+        }
+
+        function cancelAlert() {
+            document.getElementById('alertPanel').style.display = 'none';
+            updateStatus('safe', '🟢', 'Safe', 'Alert cancelled');
+        }
+
+        function requestHelp() {
+            triggerEmergency();
+        }
+
+        // Navigation functions
+        function openHealth() {
+            window.location.href = 'senior_health.html';
+        }
+
+        function openMedicines() {
+            window.location.href = 'senior_medicines.html';
+        }
+
+        function openReminders() {
+            window.location.href = 'senior_reminders.html';
+        }
+
+        function openAssistant() {
+            window.location.href = 'senior_assistant.html';
+        }
+
+        // Language change
+        function changeLanguage() {
+            currentLanguage = document.getElementById('languageSelect').value;
+            localStorage.setItem('language', currentLanguage);
+            
+            // Update UI text
+            updateUIText();
+        }
+
+        function updateUIText() {
+            const t = translations[currentLanguage];
+            document.getElementById('welcomeMessage').textContent = t.welcome;
+            document.querySelector('.risk-label').textContent = t.riskLevel;
+            document.querySelector('.contact-label').textContent = t.emergencyContact;
+            document.querySelector('.sos-text').textContent = t.sosText;
+            document.querySelector('.sos-instruction').textContent = t.sosInstruction;
+            document.querySelector('.quick-actions h2').textContent = t.quickActions;
+            
+            // Update more text elements as needed
+        }
+
+        // Tips carousel
+        function initializeTipsCarousel() {
+            const tips = document.querySelectorAll('.tip-card');
+            let currentIndex = 0;
+            
+            setInterval(() => {
+                tips[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % tips.length;
+                tips[currentIndex].classList.add('active');
+            }, 5000);
+        }
+
+        // Update time
+        function updateTime() {
+            const now = new Date();
+            // Update any time displays if needed
+        }
+    </script>
+</body>
+</html>

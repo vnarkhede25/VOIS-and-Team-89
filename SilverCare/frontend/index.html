@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SiverCare - Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="status-badge success">
+                <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
+                    <circle cx="10" cy="10" r="10" fill="currentColor"/>
+                    <path d="M6 10l3 3 5-6" stroke="white" stroke-width="2" fill="none"/>
+                </svg>
+                belt Connected
+            </div>
+            <div class="language-selector">
+                <select id="language">
+                    <option>English</option>
+                    <option>Hindi</option>
+                    <option>Marathi</option>
+                </select>
+            </div>
+        </header>
+
+        <!-- SOS Button -->
+        <div class="sos-section">
+            <button class="sos-button" id="sosButton">
+                <div class="sos-icon">
+                    <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+                        <path d="M30 10v10M30 30v10M20 20l7 7M40 20l-7 7M20 40l7-7M40 40l-7-7" stroke="white" stroke-width="4" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="sos-text">SOS</div>
+                <div class="sos-subtext">PRESS FOR HELP</div>
+            </button>
+            <p class="sos-instruction">Press and hold for 3 seconds</p>
+        </div>
+
+        <!-- Menu Items -->
+        <div class="menu-list">
+            <div class="menu-item" onclick="openReminders()">
+                <div class="menu-icon yellow-bg">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <rect x="8" y="10" width="16" height="16" rx="2" stroke="#D97706" stroke-width="2" fill="none"/>
+                        <path d="M16 14v4M14 18h4" stroke="#D97706" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="menu-content">
+                    <h3 class="menu-title">Reminders</h3>
+                    <p class="menu-subtitle">Medicines at 2 PM</p>
+                </div>
+                <svg class="menu-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 6l6 6-6 6" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+
+            <div class="menu-item" onclick="openAlerts()">
+                <div class="menu-icon pink-bg">
+                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+                        <path d="M16 8c-3 0-5 2-5 5v3l-2 4h14l-2-4v-3c0-3-2-5-5-5zM14 20v1c0 1.1.9 2 2 2s2-.9 2-2v-1" stroke="#DC2626" stroke-width="2" stroke-linecap="round"/>
+                    </svg>
+                </div>
+                <div class="menu-content">
+                    <h3 class="menu-title">Alerts</h3>
+                    <p class="menu-subtitle">No new alerts</p>
+                </div>
+                <svg class="menu-arrow" width="24" height="24" viewBox="0 0 24 24" fill="none">
+                    <path d="M9 6l6 6-6 6" stroke="#9CA3AF" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="index.html" class="nav-item active">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/>
+                </svg>
+                <span>Home</span>
+            </a>
+            <button class="nav-item assistant-nav-btn" onclick="openAssistantChat()" title="Open Assistant">
+                <svg width="24" height="24" viewBox="0 0 32 32" fill="currentColor">
+                    <path d="M16 28c6.627 0 12-5.373 12-12S22.627 4 16 4 4 9.373 4 16c0 2.4.7 4.6 2 6.5L4 28l5.5-2c1.9 1.3 4.1 2 6.5 2z" fill="#3B82F6"/>
+                </svg>
+                <span>Assistant</span>
+            </button>
+            <a href="#" class="nav-item" onclick="openHealth()">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M4 12h16M12 4v16" stroke-width="2"/>
+                </svg>
+                <span>Health</span>
+            </a>
+        </nav>
+
+        <!-- Floating Assistant Icon (removed) -->
+
+        <!-- Assistant Chat Modal -->
+        <div id="chat-modal" class="chat-modal">
+            <div class="chat-modal-content">
+                <div class="chat-header">
+                    <h2>VOIS Companion 💙</h2>
+                    <button class="close-btn" onclick="closeAssistantChat()">&times;</button>
+                </div>
+                <div id="messages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input id="user-input" type="text" placeholder="Type hi..." onkeypress="if(event.key==='Enter') send()">
+                    <button onclick="send()" class="send-btn">➤</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Assistant Chat Functions
+        function openAssistantChat() {
+            window.open('test.html', '_blank');
+        }
+
+        function closeAssistantChat() {
+            document.getElementById('chat-modal').style.display = 'none';
+        }
+
+        function send() {
+            const input = document.getElementById('user-input');
+            const message = input.value.trim();
+            
+            if (!message) return;
+            
+            const messagesDiv = document.getElementById('messages');
+            
+            // Add user message
+            const userMsg = document.createElement('div');
+            userMsg.className = 'user-message';
+            userMsg.textContent = message;
+            messagesDiv.appendChild(userMsg);
+            
+            // Clear input
+            input.value = '';
+            
+            // Add bot response
+            setTimeout(() => {
+                const botMsg = document.createElement('div');
+                botMsg.className = 'bot-message';
+                botMsg.textContent = 'I\'m here to help! What would you like to know?';
+                messagesDiv.appendChild(botMsg);
+                messagesDiv.scrollTop = messagesDiv.scrollHeight;
+            }, 1000);
+            
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        // Health Functions
+        function openHealth() {
+            window.location.href = 'health.html';
+        }
+
+        // Reminders Functions
+        function openReminders() {
+            alert('Medicine reminders will be shown here');
+        }
+
+        // Alerts Functions
+        function openAlerts() {
+            alert('No new alerts at the moment');
+        }
+
+        // SOS Button Function
+        let sosTimer;
+        let sosPressed = false;
+
+        document.getElementById('sosButton').addEventListener('mousedown', function() {
+            sosPressed = true;
+            sosTimer = setTimeout(function() {
+                alert('SOS Alert Sent! Help is on the way.');
+                sosPressed = false;
+            }, 3000);
+        });
+
+        document.getElementById('sosButton').addEventListener('mouseup', function() {
+            if (sosPressed) {
+                clearTimeout(sosTimer);
+                sosPressed = false;
+            }
+        });
+
+        document.getElementById('sosButton').addEventListener('mouseleave', function() {
+            if (sosPressed) {
+                clearTimeout(sosTimer);
+                sosPressed = false;
+            }
+        });
+
+        // Touch events for mobile
+        document.getElementById('sosButton').addEventListener('touchstart', function(e) {
+            e.preventDefault();
+            sosPressed = true;
+            sosTimer = setTimeout(function() {
+                alert('SOS Alert Sent! Help is on the way.');
+                sosPressed = false;
+            }, 3000);
+        });
+
+        document.getElementById('sosButton').addEventListener('touchend', function(e) {
+            e.preventDefault();
+            if (sosPressed) {
+                clearTimeout(sosTimer);
+                sosPressed = false;
+            }
+        });
+    </script>
+</body>
+</html>

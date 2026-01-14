@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SilverCare - Health Dashboard</title>
+    <link rel="stylesheet" href="senior_styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <button class="back-btn" onclick="window.history.back()">←</button>
+            <h1>Health Dashboard</h1>
+            <div class="status-indicator">
+                <div class="status-dot online"></div>
+                <span>Active</span>
+            </div>
+        </header>
+
+        <!-- Health Overview -->
+        <section class="health-overview">
+            <div class="status-cards">
+                <div class="status-card">
+                    <div class="card-icon">💊</div>
+                    <div class="card-number" id="totalMedicines">0</div>
+                    <div class="card-label">Total Medicines</div>
+                </div>
+                <div class="status-card">
+                    <div class="card-icon">✅</div>
+                    <div class="card-number" id="takenMedicines">0</div>
+                    <div class="card-label">Taken</div>
+                </div>
+                <div class="status-card">
+                    <div class="card-icon">⏰</div>
+                    <div class="card-number" id="pendingMedicines">0</div>
+                    <div class="card-label">Pending</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Vitals -->
+        <section class="vitals-section">
+            <h2>Today's Vitals</h2>
+            <div class="vitals-grid">
+                <div class="vital-card">
+                    <div class="vital-icon">💓</div>
+                    <div class="vital-info">
+                        <div class="vital-value" id="heartRate">72 bpm</div>
+                        <div class="vital-label">Heart Rate</div>
+                        <div class="vital-time">Last: 2 hours ago</div>
+                    </div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-icon">🩸</div>
+                    <div class="vital-info">
+                        <div class="vital-value" id="bloodPressure">120/80</div>
+                        <div class="vital-label">Blood Pressure</div>
+                        <div class="vital-time">Last: 2 hours ago</div>
+                    </div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-icon">🌡️</div>
+                    <div class="vital-info">
+                        <div class="vital-value" id="temperature">98.6°F</div>
+                        <div class="vital-label">Temperature</div>
+                        <div class="vital-time">Last: 1 hour ago</div>
+                    </div>
+                </div>
+                <div class="vital-card">
+                    <div class="vital-icon">🚶</div>
+                    <div class="vital-info">
+                        <div class="vital-value" id="steps">3,245</div>
+                        <div class="vital-label">Steps Today</div>
+                        <div class="vital-time">Updated: Just now</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Today's Medicines -->
+        <section class="medicines-section">
+            <div class="section-header">
+                <h2>💊 Today's Medicines</h2>
+                <button class="refresh-btn" onclick="loadMedicines()">🔄</button>
+            </div>
+            <div id="medicineList" class="medicine-list">
+                <div class="loading-state">
+                    <div class="loading-spinner">⏳</div>
+                    <p>Loading medicines...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Health Tips -->
+        <section class="tips-section">
+            <h2>💡 Health Tips</h2>
+            <div class="tips-carousel">
+                <div class="tip-card active">
+                    <div class="tip-icon">💧</div>
+                    <div class="tip-content">
+                        <h4>Stay Hydrated</h4>
+                        <p>Drink at least 8 glasses of water daily for better health</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">🚶</div>
+                    <div class="tip-content">
+                        <h4>Daily Walk</h4>
+                        <p>Take a 15-minute walk for better circulation and mood</p>
+                    </div>
+                </div>
+                <div class="tip-card">
+                    <div class="tip-icon">😴</div>
+                    <div class="tip-content">
+                        <h4>Good Sleep</h4>
+                        <p>Aim for 7-8 hours of quality sleep for recovery</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Bottom Navigation -->
+        <nav class="bottom-nav">
+            <a href="senior_app.html" class="nav-item">
+                <div class="nav-icon">🏠</div>
+                <span>Home</span>
+            </a>
+            <button class="nav-item active">
+                <div class="nav-icon">❤️</div>
+                <span>Health</span>
+            </button>
+            <button class="nav-item" onclick="window.location.href='senior_medicines.html'">
+                <div class="nav-icon">💊</div>
+                <span>Medicines</span>
+            </button>
+            <button class="nav-item" onclick="window.location.href='senior_assistant.html'">
+                <div class="nav-icon">💬</div>
+                <span>Assistant</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let patientId = localStorage.getItem('currentPatientId');
+        let medicines = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMedicines();
+            updateVitals();
+            initializeTipsCarousel();
+        });
+
+        // Load medicines
+        async function loadMedicines() {
+            try {
+                const response = await fetch(`${API_BASE}/medicines/${patientId}`);
+                const data = await response.json();
+                
+                medicines = data.medicines || [];
+                displayMedicines();
+                updateMedicineSummary();
+            } catch (error) {
+                console.error('Error loading medicines:', error);
+                document.getElementById('medicineList').innerHTML = `
+                    <div class="error-state">
+                        <div class="error-icon">❌</div>
+                        <p>Failed to load medicines</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Display medicines
+        function displayMedicines() {
+            const medicineList = document.getElementById('medicineList');
+            
+            if (medicines.length === 0) {
+                medicineList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-icon">💊</div>
+                        <h3>No medicines scheduled</h3>
+                        <p>You don't have any medicines for today</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const today = new Date().toISOString().split('T')[0];
+            const currentTime = new Date().toTimeString().slice(0, 5);
+            
+            let html = '';
+            medicines.forEach(medicine => {
+                const isToday = medicine.start_date <= today && medicine.end_date >= today;
+                if (!isToday) return;
+
+                medicine.times.forEach(time => {
+                    const isPast = time < currentTime;
+                    const status = getMedicineStatus(medicine.id, time);
+                    
+                    html += `
+                        <div class="medicine-item ${status}">
+                            <div class="medicine-icon">💊</div>
+                            <div class="medicine-details">
+                                <h4>${medicine.name}</h4>
+                                <p class="medicine-time">🕐 ${time}</p>
+                                <p class="medicine-dosage">${medicine.dosage}</p>
+                            </div>
+                            <div class="medicine-status">
+                                ${getStatusBadge(status)}
+                            </div>
+                        </div>
+                    `;
+                });
+            });
+
+            medicineList.innerHTML = html || `
+                <div class="empty-state">
+                    <div class="empty-icon">💊</div>
+                    <h3>No medicines for today</h3>
+                    <p>Enjoy your medicine-free day!</p>
+                </div>
+            `;
+        }
+
+        // Update medicine summary
+        function updateMedicineSummary() {
+            const today = new Date().toISOString().split('T')[0];
+            const currentTime = new Date().toTimeString().slice(0, 5);
+            
+            let total = 0, taken = 0, pending = 0;
+            
+            medicines.forEach(medicine => {
+                const isToday = medicine.start_date <= today && medicine.end_date >= today;
+                if (!isToday) return;
+                
+                medicine.times.forEach(time => {
+                    total++;
+                    const status = getMedicineStatus(medicine.id, time);
+                    if (status === 'taken') taken++;
+                    else if (status === 'pending') pending++;
+                });
+            });
+
+            document.getElementById('totalMedicines').textContent = total;
+            document.getElementById('takenMedicines').textContent = taken;
+            document.getElementById('pendingMedicines').textContent = pending;
+        }
+
+        // Get medicine status
+        function getMedicineStatus(medicineId, time) {
+            const key = `${medicineId}_${time}`;
+            return localStorage.getItem(`medicine_${key}`) || 'pending';
+        }
+
+        // Get status badge
+        function getStatusBadge(status) {
+            const badges = {
+                'taken': '<span class="badge success">✅ Taken</span>',
+                'pending': '<span class="badge pending">⏰ Pending</span>',
+                'missed': '<span class="badge missed">❌ Missed</span>'
+            };
+            return badges[status] || badges['pending'];
+        }
+
+        // Update vitals (simulated)
+        function updateVitals() {
+            // Simulate vital signs
+            setInterval(() => {
+                document.getElementById('heartRate').textContent = 
+                    `${Math.floor(Math.random() * 20) + 65} bpm`;
+                document.getElementById('steps').textContent = 
+                    Math.floor(Math.random() * 2000) + 2000;
+            }, 30000); // Update every 30 seconds
+        }
+
+        // Tips carousel
+        function initializeTipsCarousel() {
+            const tips = document.querySelectorAll('.tip-card');
+            let currentIndex = 0;
+            
+            setInterval(() => {
+                tips[currentIndex].classList.remove('active');
+                currentIndex = (currentIndex + 1) % tips.length;
+                tips[currentIndex].classList.add('active');
+            }, 5000);
+        }
+
+        // Additional styles for health page
+        const healthStyles = `
+            .health-overview {
+                padding: 20px;
+                background: linear-gradient(135deg, #f8f9ff 0%, #e0e7ff 100%);
+            }
+            
+            .vitals-section {
+                padding: 20px;
+            }
+            
+            .vitals-section h2 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-dark);
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .vitals-grid {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 15px;
+            }
+            
+            .vital-card {
+                background: white;
+                border-radius: 15px;
+                padding: 20px;
+                box-shadow: var(--shadow-md);
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                border: 2px solid var(--border-color);
+            }
+            
+            .vital-icon {
+                font-size: 2rem;
+                flex-shrink: 0;
+            }
+            
+            .vital-value {
+                font-size: 1.3rem;
+                font-weight: 700;
+                color: var(--text-dark);
+                margin-bottom: 4px;
+            }
+            
+            .vital-label {
+                font-size: 0.9rem;
+                color: var(--text-gray);
+                font-weight: 600;
+                margin-bottom: 4px;
+            }
+            
+            .vital-time {
+                font-size: 0.8rem;
+                color: var(--text-light);
+            }
+            
+            .medicines-section {
+                padding: 20px;
+            }
+            
+            .section-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-bottom: 20px;
+            }
+            
+            .section-header h2 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-dark);
+                margin: 0;
+            }
+            
+            .medicine-list {
+                max-height: 400px;
+                overflow-y: auto;
+            }
+            
+            .medicine-item {
+                background: white;
+                border-radius: 12px;
+                padding: 15px;
+                margin-bottom: 15px;
+                box-shadow: var(--shadow-sm);
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                border: 2px solid var(--border-color);
+            }
+            
+            .medicine-icon {
+                font-size: 2rem;
+                flex-shrink: 0;
+            }
+            
+            .medicine-details h4 {
+                margin: 0 0 5px 0;
+                color: var(--text-dark);
+                font-weight: 700;
+            }
+            
+            .medicine-time, .medicine-dosage {
+                margin: 2px 0;
+                font-size: 0.9rem;
+                color: var(--text-gray);
+            }
+            
+            .medicine-status {
+                flex-shrink: 0;
+            }
+            
+            .badge {
+                padding: 4px 12px;
+                border-radius: 20px;
+                font-size: 0.75rem;
+                font-weight: bold;
+            }
+            
+            .badge.success {
+                background: #d1fae5;
+                color: #065f46;
+            }
+            
+            .badge.pending {
+                background: #fff3cd;
+                color: #856404;
+            }
+            
+            .badge.missed {
+                background: #f8d7da;
+                color: #721c24;
+            }
+            
+            .tips-section {
+                padding: 20px;
+                background: white;
+            }
+            
+            .tips-section h2 {
+                font-size: 1.5rem;
+                font-weight: 700;
+                color: var(--text-dark);
+                margin-bottom: 20px;
+                text-align: center;
+            }
+            
+            .tips-carousel {
+                position: relative;
+                height: 120px;
+                overflow: hidden;
+            }
+            
+            .tip-card {
+                position: absolute;
+                width: 100%;
+                background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+                border-radius: 12px;
+                padding: 15px;
+                display: flex;
+                align-items: center;
+                gap: 15px;
+                box-shadow: var(--shadow-sm);
+                opacity: 0;
+                transform: translateX(100%);
+                transition: all 0.5s ease;
+            }
+            
+            .tip-card.active {
+                opacity: 1;
+                transform: translateX(0);
+            }
+            
+            .tip-icon {
+                font-size: 2rem;
+                flex-shrink: 0;
+            }
+            
+            .tip-content h4 {
+                margin: 0 0 5px 0;
+                color: var(--text-dark);
+                font-weight: 700;
+            }
+            
+            .tip-content p {
+                margin: 0;
+                font-size: 0.9rem;
+                color: var(--text-gray);
+                line-height: 1.4;
+            }
+            
+            .loading-state, .error-state, .empty-state {
+                text-align: center;
+                padding: 40px 20px;
+                color: var(--text-gray);
+            }
+            
+            .loading-spinner, .error-icon, .empty-icon {
+                font-size: 3rem;
+                margin-bottom: 15px;
+            }
+        `;
+
+        // Inject styles
+        const styleSheet = document.createElement('style');
+        styleSheet.textContent = healthStyles;
+        document.head.appendChild(styleSheet);
+    </script>
+</body>
+</html>

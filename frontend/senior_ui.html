@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SilverCare Senior Monitor</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .main-container {
+            width: 100%;
+            max-width: 400px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .status-display {
+            background: white;
+            padding: 30px 20px;
+            text-align: center;
+        }
+        
+        .status-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+        
+        .status-safe { color: #10b981; }
+        .status-warning { color: #f59e0b; }
+        .status-alert { color: #ef4444; }
+        .status-offline { color: #6b7280; }
+        
+        .status-text {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .status-description {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .device-info {
+            background: #f3f4f6;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 10px;
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 0.9rem;
+        }
+        
+        .info-label {
+            color: #6b7280;
+        }
+        
+        .info-value {
+            color: #333;
+            font-weight: 500;
+        }
+        
+        .alert-panel {
+            background: #fef2f2;
+            border: 2px solid #fecaca;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px;
+            display: none;
+        }
+        
+        .alert-panel.active {
+            display: block;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+        
+        .alert-title {
+            color: #dc2626;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .alert-message {
+            color: #7f1d1d;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-cancel {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-cancel:hover {
+            background: #059669;
+        }
+        
+        .btn-help {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn-help:hover {
+            background: #2563eb;
+        }
+        
+        .btn-emergency {
+            background: #ef4444;
+            color: white;
+        }
+        
+        .btn-emergency:hover {
+            background: #dc2626;
+        }
+        
+        .controls {
+            padding: 20px;
+            background: #f9fafb;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .control-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .control-btn:hover {
+            background: #f3f4f6;
+            border-color: #667eea;
+        }
+        
+        .control-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        
+        .chat-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .chat-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            transition: all 0.2s;
+        }
+        
+        .chat-button:hover {
+            background: #5a67d8;
+            transform: scale(1.1);
+        }
+        
+        .last-update {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.8rem;
+            padding: 10px;
+            background: #f9fafb;
+        }
+        
+        .pulse-animation {
+            animation: pulse 2s infinite;
+        }
+        
+        .shake-animation {
+            animation: shake 0.5s;
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        
+        .demo-controls {
+            background: #f0f9ff;
+            border: 2px solid #bfdbfe;
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px;
+        }
+        
+        .demo-title {
+            color: #1e40af;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .demo-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        
+        .demo-btn {
+            padding: 10px;
+            border: 1px solid #93c5fd;
+            background: white;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .demo-btn:hover {
+            background: #dbeafe;
+        }
+        
+        .demo-btn.fall {
+            background: #fef2f2;
+            border-color: #fecaca;
+            color: #dc2626;
+        }
+        
+        .demo-btn.fall:hover {
+            background: #fee2e2;
+        }
+        
+        .welcome-message {
+            font-size: 1.2rem;
+            color: #667eea;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+        
+        .risk-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 10px 0;
+        }
+        
+        .risk-label {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+        
+        .risk-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .risk-badge.low {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .risk-badge.medium {
+            background: #fed7aa;
+            color: #92400e;
+        }
+        
+        .risk-badge.high {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="header">
+            <h1>🛡️ SilverCare Senior Monitor</h1>
+            <div class="welcome-message" id="welcomeMessage">Welcome!</div>
+            <div class="risk-info">
+                <span class="risk-label">Risk Level:</span>
+                <span class="risk-badge" id="riskLevel">LOW</span>
+            </div>
+        </div>
+        <div>Your Safety Companion</div>
+        </div>
+        
+        <div class="status-display">
+            <div class="status-icon" id="statusIcon">🟢</div>
+            <div class="status-text" id="statusText">Safe</div>
+            <div class="status-description" id="statusDescription">Everything is normal</div>
+        </div>
+        
+        <div class="device-info">
+            <div class="info-row">
+                <span class="info-label">Device Status:</span>
+                <span class="info-value" id="deviceStatus">Online</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Battery:</span>
+                <span class="info-value" id="batteryLevel">85%</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Last Check:</span>
+                <span class="info-value" id="lastCheck">Just now</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Posture:</span>
+                <span class="info-value" id="postureStatus">Standing</span>
+            </div>
+        </div>
+        
+        <div class="alert-panel" id="alertPanel">
+            <div class="alert-title">⚠️ Alert Detected</div>
+            <div class="alert-message" id="alertMessage">Fall detected! Are you okay?</div>
+            <div class="alert-actions">
+                <button class="btn btn-cancel" onclick="cancelAlert()">I'm Okay</button>
+                <button class="btn btn-help" onclick="requestHelp()">Need Help</button>
+            </div>
+        </div>
+        
+        <div class="demo-controls">
+            <div class="demo-title">🎮 Demo Controls</div>
+            <div class="demo-buttons">
+                <button class="demo-btn" onclick="simulateNormal()">Normal</button>
+                <button class="demo-btn" onclick="simulateSitting()">Sitting</button>
+                <button class="demo-btn" onclick="simulateInstability()">Unstable</button>
+                <button class="demo-btn fall" onclick="simulateFall()">Fall 🚨</button>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" id="autoModeBtn" onclick="toggleAutoMode()">Auto Mode</button>
+            <button class="control-btn" onclick="testDevice()">Test Device</button>
+            <button class="control-btn" onclick="showSettings()">Settings</button>
+        </div>
+        
+        <div class="last-update" id="lastUpdate">
+            Last updated: Just now
+        </div>
+    </div>
+    
+    <div class="chat-container">
+        <button class="chat-button" onclick="openCompanion()">💬</button>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:5000/api';
+        let currentStatus = 'safe';
+        let autoMode = true;
+        let alertTimeout = null;
+        let patientId = 'demo_patient';
+        
+        // Initialize
+        window.onload = function() {
+            checkOnboardingStatus();
+        };
+        
+        // Check if user has completed onboarding
+        function checkOnboardingStatus() {
+            const patientId = localStorage.getItem('currentPatientId');
+            const patientName = localStorage.getItem('patientName');
+            
+            if (!patientId) {
+                // Redirect to onboarding if not completed
+                window.location.href = 'onboarding.html';
+                return;
+            }
+            
+            patientId = patientId;
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${patientName}!`;
+            
+            registerPatient();
+            startStatusMonitoring();
+            updateLastUpdate();
+        }
+        
+        // Register patient with personalized data
+        async function registerPatient() {
+            try {
+                const patientName = localStorage.getItem('patientName') || 'User';
+                const response = await fetch(`${API_BASE}/patients/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: patientId,
+                        name: patientName,
+                        registered_at: new Date().toISOString()
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('Patient registered successfully');
+                    loadPatientProfile();
+                }
+            } catch (error) {
+                console.log('Backend not available, running in offline mode');
+            }
+        }
+        
+        // Load patient profile for personalized experience
+        async function loadPatientProfile() {
+            try {
+                const response = await fetch(`${API_BASE}/patients/${patientId}`);
+                const data = await response.json();
+                
+                if (data.success && data.patient) {
+                    const patient = data.patient;
+                    
+                    // Update UI with personalized information
+                    if (patient.risk_assessment) {
+                        updateRiskDisplay(patient.risk_assessment);
+                    }
+                    
+                    if (patient.emergency_contacts) {
+                        updateEmergencyContacts(patient.emergency_contacts);
+                    }
+                    
+                    // Adjust detection settings based on profile
+                    if (patient.risk_assessment && patient.risk_assessment.recommended_settings) {
+                        applyPersonalizedSettings(patient.risk_assessment.recommended_settings);
+                    }
+                }
+            } catch (error) {
+                console.log('Could not load patient profile');
+            }
+        }
+        
+        // Update risk display based on assessment
+        function updateRiskDisplay(riskAssessment) {
+            const riskLevel = riskAssessment.level;
+            const riskElement = document.getElementById('riskLevel');
+            
+            if (riskElement) {
+                riskElement.textContent = riskLevel;
+                riskElement.className = `risk-badge ${riskLevel.toLowerCase()}`;
+            }
+        }
+        
+        // Update emergency contacts display
+        function updateEmergencyContacts(contacts) {
+            const primaryContact = contacts.find(c => c.primary);
+            if (primaryContact) {
+                const contactElement = document.getElementById('emergencyContact');
+                if (contactElement) {
+                    contactElement.textContent = `${primaryContact.name} (${primaryContact.relation})`;
+                }
+            }
+        }
+        
+        // Apply personalized detection settings
+        function applyPersonalizedSettings(settings) {
+            // These settings would be sent to the backend/detection system
+            console.log('Applying personalized settings:', settings);
+            
+            // Store settings for potential API calls
+            localStorage.setItem('detectionSettings', JSON.stringify(settings));
+        }
+        
+        // Status monitoring
+        function startStatusMonitoring() {
+            setInterval(() => {
+                if (autoMode) {
+                    updateDeviceStatus();
+                    updateLastUpdate();
+                }
+            }, 5000);
+        }
+        
+        // Update device status
+        function updateDeviceStatus() {
+            const battery = Math.max(20, 85 - Math.floor(Math.random() * 5));
+            document.getElementById('batteryLevel').textContent = battery + '%';
+            document.getElementById('lastCheck').textContent = 'Just now';
+            
+            // Simulate posture changes
+            const postures = ['Standing', 'Sitting', 'Walking'];
+            const randomPosture = postures[Math.floor(Math.random() * postures.length)];
+            document.getElementById('postureStatus').textContent = randomPosture;
+        }
+        
+        // Update last update time
+        function updateLastUpdate() {
+            document.getElementById('lastUpdate').textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+        }
+        
+        // Status update functions
+        function setStatus(status, icon, text, description) {
+            currentStatus = status;
+            const statusIcon = document.getElementById('statusIcon');
+            const statusText = document.getElementById('statusText');
+            const statusDescription = document.getElementById('statusDescription');
+            
+            statusIcon.textContent = icon;
+            statusIcon.className = `status-icon status-${status}`;
+            statusText.textContent = text;
+            statusDescription.textContent = description;
+            
+            if (status === 'alert') {
+                statusIcon.classList.add('shake-animation');
+                setTimeout(() => statusIcon.classList.remove('shake-animation'), 500);
+            }
+        }
+        
+        // Demo simulation functions
+        function simulateNormal() {
+            setStatus('safe', '🟢', 'Safe', 'Everything is normal');
+            hideAlert();
+        }
+        
+        function simulateSitting() {
+            setStatus('safe', '🟢', 'Safe', 'Resting comfortably');
+            hideAlert();
+            document.getElementById('postureStatus').textContent = 'Sitting';
+        }
+        
+        function simulateInstability() {
+            setStatus('warning', '🟡', 'Be Careful', 'Unstable movement detected');
+            hideAlert();
+            
+            // Send instability alert
+            sendAlert('instability', 'medium', {
+                description: 'Pre-fall instability detected',
+                risk_score: 0.7
+            });
+        }
+        
+        function simulateFall() {
+            setStatus('alert', '🔴', 'Alert!', 'Fall detected!');
+            showAlert('Fall detected! Are you okay?');
+            
+            // Send fall alert
+            sendAlert('fall', 'critical', {
+                description: 'Fall detected while standing',
+                impact_magnitude: 18.5,
+                posture: 'standing'
+            });
+            
+            // Auto-cancel after 10 seconds if no response
+            alertTimeout = setTimeout(() => {
+                sendEmergencyAlert();
+            }, 10000);
+        }
+        
+        // Alert functions
+        function showAlert(message) {
+            const alertPanel = document.getElementById('alertPanel');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            alertMessage.textContent = message;
+            alertPanel.classList.add('active');
+        }
+        
+        function hideAlert() {
+            const alertPanel = document.getElementById('alertPanel');
+            alertPanel.classList.remove('active');
+            
+            if (alertTimeout) {
+                clearTimeout(alertTimeout);
+                alertTimeout = null;
+            }
+        }
+        
+        function cancelAlert() {
+            hideAlert();
+            setStatus('safe', '🟢', 'Safe', 'Alert cancelled - You are okay');
+            
+            // Send alert cancellation
+            sendAlert('cancelled', 'low', {
+                description: 'Alert cancelled by user'
+            });
+        }
+        
+        function requestHelp() {
+            hideAlert();
+            setStatus('alert', '🔴', 'Help Requested', 'Help is on the way');
+            
+            // Send help request
+            sendAlert('help_requested', 'high', {
+                description: 'User requested help'
+            });
+        }
+        
+        function sendEmergencyAlert() {
+            hideAlert();
+            setStatus('alert', '🚨', 'Emergency', 'Emergency services notified');
+            
+            // Send emergency alert
+            sendAlert('emergency', 'critical', {
+                description: 'No response to fall alert - Emergency services notified'
+            });
+        }
+        
+        // Send alert to backend
+        async function sendAlert(alertType, severity, details) {
+            try {
+                const response = await fetch(`${API_BASE}/alerts`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        patient_id: patientId,
+                        alert_type: alertType,
+                        severity: severity,
+                        details: details
+                    })
+                });
+                
+                if (response.ok) {
+                    console.log('Alert sent successfully');
+                }
+            } catch (error) {
+                console.log('Backend not available, alert not sent');
+            }
+        }
+        
+        // Control functions
+        function toggleAutoMode() {
+            autoMode = !autoMode;
+            const btn = document.getElementById('autoModeBtn');
+            
+            if (autoMode) {
+                btn.classList.add('active');
+                btn.textContent = 'Auto Mode';
+            } else {
+                btn.classList.remove('active');
+                btn.textContent = 'Manual Mode';
+            }
+        }
+        
+        function testDevice() {
+            setStatus('safe', '🔵', 'Testing', 'Running device test...');
+            
+            setTimeout(() => {
+                setStatus('safe', '🟢', 'Safe', 'Device test passed');
+            }, 2000);
+        }
+        
+        function showSettings() {
+            alert('Settings panel would open here. In a real app, this would show device settings, emergency contacts, etc.');
+        }
+        
+        function openCompanion() {
+            window.open('test.html', '_blank', 'width=400,height=600');
+        }
+        
+        // Initialize auto mode
+        toggleAutoMode();
+    </script>
+</body>
+</html>
