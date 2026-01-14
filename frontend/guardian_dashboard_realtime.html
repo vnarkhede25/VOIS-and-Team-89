@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverCare Guardian Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            color: #1f2937;
+            font-size: 32px;
+            font-weight: 600;
+        }
+
+        .patient-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .patient-avatar {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #059669);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .patient-details h2 {
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .patient-details p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .status-dot.warning {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Alert Banner */
+        .alert-banner {
+            background: rgba(239, 68, 68, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 25px;
+            display: none;
+            animation: slideIn 0.5s ease;
+        }
+
+        .alert-banner.active {
+            display: block;
+        }
+
+        .alert-banner.warning {
+            background: rgba(245, 158, 11, 0.95);
+        }
+
+        .alert-banner.info {
+            background: rgba(59, 130, 246, 0.95);
+        }
+
+        .alert-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .alert-message {
+            color: white;
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .alert-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .alert-button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .alert-button.acknowledge {
+            background: white;
+            color: #dc2626;
+        }
+
+        .alert-button.escalate {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid white;
+        }
+
+        .alert-button:hover {
+            transform: translateY(-1px);
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .card-icon.vitals {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .card-icon.location {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .card-icon.activity {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .card-icon.alerts {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        /* Vitals Display */
+        .vitals-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .vital-item {
+            text-align: center;
+            padding: 15px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 12px;
+        }
+
+        .vital-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .vital-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .vital-status {
+            font-size: 11px;
+            margin-top: 5px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            display: inline-block;
+        }
+
+        .vital-status.normal {
+            background: #10b981;
+            color: white;
+        }
+
+        .vital-status.warning {
+            background: #f59e0b;
+            color: white;
+        }
+
+        .vital-status.critical {
+            background: #ef4444;
+            color: white;
+        }
+
+        /* Location Display */
+        .location-info {
+            padding: 15px;
+            background: linear-gradient(135deg, #eff6ff, #dbeafe);
+            border-radius: 12px;
+            margin-bottom: 15px;
+        }
+
+        .location-address {
+            font-size: 16px;
+            color: #1e40af;
+            margin-bottom: 5px;
+        }
+
+        .location-time {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .location-map {
+            height: 200px;
+            background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #4338ca;
+            font-size: 14px;
+        }
+
+        /* Activity Display */
+        .activity-status {
+            padding: 20px;
+            background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+            border-radius: 12px;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .activity-name {
+            font-size: 24px;
+            font-weight: bold;
+            color: #065f46;
+            margin-bottom: 5px;
+        }
+
+        .activity-duration {
+            font-size: 14px;
+            color: #047857;
+        }
+
+        .activity-chart {
+            height: 150px;
+            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #166534;
+            font-size: 14px;
+        }
+
+        /* Alerts Timeline */
+        .alerts-timeline {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .alert-item {
+            display: flex;
+            gap: 15px;
+            padding: 15px;
+            border-left: 3px solid #e5e7eb;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, #f9fafb, #f3f4f6);
+            border-radius: 0 8px 8px 0;
+            transition: all 0.3s ease;
+        }
+
+        .alert-item:hover {
+            background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+        }
+
+        .alert-item.emergency {
+            border-left-color: #ef4444;
+        }
+
+        .alert-item.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .alert-item.info {
+            border-left-color: #3b82f6;
+        }
+
+        .alert-time {
+            font-size: 12px;
+            color: #6b7280;
+            white-space: nowrap;
+        }
+
+        .alert-content {
+            flex: 1;
+        }
+
+        .alert-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .alert-description {
+            font-size: 14px;
+            color: #4b5563;
+        }
+
+        .alert-status {
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .alert-status.active {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .alert-status.acknowledged {
+            background: #f0fdf4;
+            color: #166534;
+        }
+
+        .alert-status.resolved {
+            background: #f8fafc;
+            color: #6b7280;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .action-button {
+            padding: 15px 20px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-button.primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .action-button.emergency {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .action-button.secondary {
+            background: linear-gradient(135deg, #6b7280, #4b5563);
+            color: white;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .vitals-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Connection Status Messages */
+        .connection-message {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .connection-message.show {
+            display: block;
+        }
+
+        .connection-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #dc2626;
+        }
+
+        .connection-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #059669;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Connection Status -->
+        <div id="connectionMessage" class="connection-message">
+            <span id="connectionText">Connecting to system...</span>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div>
+                    <h1>Guardian Dashboard</h1>
+                    <div class="connection-status">
+                        <div id="connectionStatus" class="status-dot offline"></div>
+                        <span id="connectionText">Offline</span>
+                    </div>
+                </div>
+                <div class="patient-info">
+                    <div class="patient-avatar">JD</div>
+                    <div class="patient-details">
+                        <h2 id="patientName">John Doe</h2>
+                        <p id="patientAge">Age: 75 • Patient ID: #001</p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Alert Banner -->
+        <div id="alertBanner" class="alert-banner">
+            <div class="alert-content">
+                <div class="alert-message" id="alertMessage">
+                    🚨 Emergency alert detected!
+                </div>
+                <div class="alert-actions">
+                    <button class="alert-button acknowledge" onclick="acknowledgeAlert()">Acknowledge</button>
+                    <button class="alert-button escalate" onclick="escalateAlert()">Escalate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- Vitals Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Live Vitals</div>
+                    <div class="card-icon vitals">❤️</div>
+                </div>
+                <div class="vitals-grid">
+                    <div class="vital-item">
+                        <div id="heartRate" class="vital-value">--</div>
+                        <div class="vital-label">Heart Rate</div>
+                        <div id="heartStatus" class="vital-status normal">Normal</div>
+                    </div>
+                    <div class="vital-item">
+                        <div id="temperature" class="vital-value">--</div>
+                        <div class="vital-label">Temperature</div>
+                        <div id="tempStatus" class="vital-status normal">Normal</div>
+                    </div>
+                    <div class="vital-item">
+                        <div id="spo2" class="vital-value">--</div>
+                        <div class="vital-label">SpO₂</div>
+                        <div id="spo2Status" class="vital-status normal">Normal</div>
+                    </div>
+                    <div class="vital-item">
+                        <div id="battery" class="vital-value">--</div>
+                        <div class="vital-label">Battery</div>
+                        <div id="batteryStatus" class="vital-status normal">Good</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Location</div>
+                    <div class="card-icon location">📍</div>
+                </div>
+                <div class="location-info">
+                    <div id="locationAddress" class="location-address">123 Main St, New York, NY</div>
+                    <div id="locationTime" class="location-time">Last updated: Just now</div>
+                </div>
+                <div class="location-map">
+                    🗺️ Interactive map view
+                </div>
+            </div>
+
+            <!-- Activity Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Activity Status</div>
+                    <div class="card-icon activity">🚶</div>
+                </div>
+                <div class="activity-status">
+                    <div id="activityName" class="activity-name">Normal Walking</div>
+                    <div id="activityDuration" class="activity-duration">For 15 minutes</div>
+                </div>
+                <div class="activity-chart">
+                    📊 Activity timeline chart
+                </div>
+            </div>
+
+            <!-- Alerts Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Alert Timeline</div>
+                    <div class="card-icon alerts">🔔</div>
+                </div>
+                <div id="alertsTimeline" class="alerts-timeline">
+                    <div class="alert-item">
+                        <div class="alert-time">--:--</div>
+                        <div class="alert-content">
+                            <div class="alert-title">No alerts</div>
+                            <div class="alert-description">System is monitoring normally</div>
+                        </div>
+                        <div class="alert-status resolved">Normal</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="card-header">
+                <div class="card-title">Quick Actions</div>
+            </div>
+            <div class="actions-grid">
+                <button class="action-button primary" onclick="callPatient()">
+                    📞 Call Patient
+                </button>
+                <button class="action-button emergency" onclick="triggerEmergency()">
+                    🚨 Emergency Services
+                </button>
+                <button class="action-button secondary" onclick="viewAnalytics()">
+                    📊 View Analytics
+                </button>
+                <button class="action-button secondary" onclick="sendNotification()">
+                    💬 Send Message
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let reconnectTimer = null;
+        let alerts = [];
+        let currentAlert = null;
+
+        // Initialize connection
+        function initWebSocket() {
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+                
+                ws.onopen = function() {
+                    console.log('Connected to WebSocket server');
+                    showConnectionMessage('Connected to system', 'success');
+                    updateConnectionStatus(true);
+                    
+                    // Request initial status
+                    ws.send(JSON.stringify({type: 'get_status'}));
+                    ws.send(JSON.stringify({type: 'get_history', limit: 50}));
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                ws.onclose = function() {
+                    console.log('WebSocket connection closed');
+                    showConnectionMessage('Connection lost. Reconnecting...', 'error');
+                    updateConnectionStatus(false);
+                    scheduleReconnect();
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    showConnectionMessage('Connection error', 'error');
+                };
+                
+            } catch (error) {
+                console.error('Failed to connect:', error);
+                showConnectionMessage('Failed to connect to system', 'error');
+                scheduleReconnect();
+            }
+        }
+
+        // Schedule reconnection
+        function scheduleReconnect() {
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+            }
+            reconnectTimer = setTimeout(initWebSocket, 3000);
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'system_status':
+                    updateSystemStatus(data.data);
+                    break;
+                case 'sensor_data':
+                    updateSensorData(data.data);
+                    break;
+                case 'system_event':
+                    handleSystemEvent(data.data);
+                    break;
+                case 'sensor_history':
+                    updateSensorHistory(data.data);
+                    break;
+                case 'pong':
+                    // Heartbeat response
+                    break;
+            }
+        }
+
+        // Update system status
+        function updateSystemStatus(status) {
+            // Update activity status
+            const activityName = document.getElementById('activityName');
+            const activityDuration = document.getElementById('activityDuration');
+            activityName.textContent = formatActivityState(status.simulation_state);
+            activityDuration.textContent = 'For ' + Math.floor(Math.random() * 30 + 5) + ' minutes';
+        }
+
+        // Update sensor data
+        function updateSensorData(sensorData) {
+            // Update heart rate
+            const heartRate = document.getElementById('heartRate');
+            const heartStatus = document.getElementById('heartStatus');
+            heartRate.textContent = sensorData.heart_rate + ' bpm';
+            heartStatus.textContent = getHeartStatus(sensorData.heart_rate);
+            heartStatus.className = `vital-status ${getHeartStatusClass(sensorData.heart_rate)}`;
+            
+            // Update temperature
+            const temperature = document.getElementById('temperature');
+            const tempStatus = document.getElementById('tempStatus');
+            temperature.textContent = sensorData.temperature + '°C';
+            tempStatus.textContent = getTempStatus(sensorData.temperature);
+            tempStatus.className = `vital-status ${getTempStatusClass(sensorData.temperature)}`;
+            
+            // Update SpO2
+            const spo2 = document.getElementById('spo2');
+            const spo2Status = document.getElementById('spo2Status');
+            spo2.textContent = sensorData.spo2 + '%';
+            spo2Status.textContent = getSpo2Status(sensorData.spo2);
+            spo2Status.className = `vital-status ${getSpo2StatusClass(sensorData.spo2)}`;
+            
+            // Update battery
+            const battery = document.getElementById('battery');
+            const batteryStatus = document.getElementById('batteryStatus');
+            battery.textContent = Math.round(sensorData.battery_level) + '%';
+            batteryStatus.textContent = getBatteryStatus(sensorData.battery_level);
+            batteryStatus.className = `vital-status ${getBatteryStatusClass(sensorData.battery_level)}`;
+            
+            // Update location time
+            document.getElementById('locationTime').textContent = 'Last updated: ' + new Date().toLocaleTimeString();
+        }
+
+        // Handle system events
+        function handleSystemEvent(eventData) {
+            // Add to alerts timeline
+            addAlertToTimeline(eventData);
+            
+            // Show alert banner if action required
+            if (eventData.action_required) {
+                showAlertBanner(eventData);
+            }
+        }
+
+        // Add alert to timeline
+        function addAlertToTimeline(eventData) {
+            const alert = {
+                id: Date.now(),
+                timestamp: eventData.timestamp,
+                event: eventData.event,
+                title: formatEventTitle(eventData.event),
+                description: formatEventDescription(eventData),
+                status: eventData.action_required ? 'active' : 'resolved',
+                confidence: eventData.confidence
+            };
+            
+            alerts.unshift(alert);
+            if (alerts.length > 20) {
+                alerts.pop();
+            }
+            
+            updateAlertsTimeline();
+        }
+
+        // Update alerts timeline
+        function updateAlertsTimeline() {
+            const timeline = document.getElementById('alertsTimeline');
+            
+            if (alerts.length === 0) {
+                timeline.innerHTML = `
+                    <div class="alert-item">
+                        <div class="alert-time">--:--</div>
+                        <div class="alert-content">
+                            <div class="alert-title">No alerts</div>
+                            <div class="alert-description">System is monitoring normally</div>
+                        </div>
+                        <div class="alert-status resolved">Normal</div>
+                    </div>
+                `;
+                return;
+            }
+            
+            timeline.innerHTML = alerts.map(alert => `
+                <div class="alert-item ${getAlertClass(alert.event)}">
+                    <div class="alert-time">${formatTime(alert.timestamp)}</div>
+                    <div class="alert-content">
+                        <div class="alert-title">${alert.title}</div>
+                        <div class="alert-description">${alert.description}</div>
+                    </div>
+                    <div class="alert-status ${alert.status}">${alert.status}</div>
+                </div>
+            `).join('');
+        }
+
+        // Show alert banner
+        function showAlertBanner(eventData) {
+            currentAlert = eventData;
+            const alertBanner = document.getElementById('alertBanner');
+            const alertMessage = document.getElementById('alertMessage');
+            
+            alertMessage.textContent = `🚨 ${formatEventTitle(eventData.event)}: ${formatEventDescription(eventData)}`;
+            alertBanner.className = `alert-banner active ${getAlertBannerClass(eventData.event)}`;
+            
+            // Auto-hide after 30 seconds for non-emergency alerts
+            if (eventData.event !== 'FALL_DETECTED' && eventData.event !== 'PANIC_BUTTON') {
+                setTimeout(() => {
+                    if (currentAlert === eventData) {
+                        hideAlertBanner();
+                    }
+                }, 30000);
+            }
+        }
+
+        // Hide alert banner
+        function hideAlertBanner() {
+            const alertBanner = document.getElementById('alertBanner');
+            alertBanner.classList.remove('active');
+            currentAlert = null;
+        }
+
+        // Acknowledge alert
+        function acknowledgeAlert() {
+            if (currentAlert) {
+                // Update alert status
+                const alert = alerts.find(a => a.id === currentAlert.id);
+                if (alert) {
+                    alert.status = 'acknowledged';
+                    updateAlertsTimeline();
+                }
+                
+                hideAlertBanner();
+                
+                // Send acknowledgment to server
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'acknowledge_alert',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+            }
+        }
+
+        // Escalate alert
+        function escalateAlert() {
+            if (currentAlert) {
+                // Update alert status
+                const alert = alerts.find(a => a.id === currentAlert.id);
+                if (alert) {
+                    alert.status = 'escalated';
+                    updateAlertsTimeline();
+                }
+                
+                // Send escalation to server
+                if (ws && ws.readyState === WebSocket.OPEN) {
+                    ws.send(JSON.stringify({
+                        type: 'escalate_alert',
+                        timestamp: new Date().toISOString()
+                    }));
+                }
+                
+                // Show escalation message
+                showConnectionMessage('🚨 Emergency services have been notified', 'error');
+            }
+        }
+
+        // Quick actions
+        function callPatient() {
+            showConnectionMessage('📞 Calling patient...', 'success');
+            // Implement call functionality
+        }
+
+        function triggerEmergency() {
+            if (confirm('Are you sure you want to trigger emergency services?')) {
+                showConnectionMessage('🚨 Emergency services triggered!', 'error');
+                // Implement emergency trigger
+            }
+        }
+
+        function viewAnalytics() {
+            window.open('learning_analytics.html', '_blank');
+        }
+
+        function sendNotification() {
+            const message = prompt('Enter message to send to patient:');
+            if (message) {
+                showConnectionMessage('💬 Message sent to patient', 'success');
+                // Implement message sending
+            }
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusDot = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('connectionText');
+            
+            if (connected) {
+                statusDot.className = 'status-dot online';
+                statusText.textContent = 'Connected';
+            } else {
+                statusDot.className = 'status-dot offline';
+                statusText.textContent = 'Offline';
+            }
+        }
+
+        // Show connection message
+        function showConnectionMessage(message, type) {
+            const messageDiv = document.getElementById('connectionMessage');
+            const messageText = document.getElementById('connectionText');
+            
+            messageText.textContent = message;
+            messageDiv.className = `connection-message show ${type}`;
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // Utility functions
+        function formatActivityState(state) {
+            return state.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function getHeartStatus(heartRate) {
+            if (heartRate < 60) return 'Low';
+            if (heartRate > 100) return 'High';
+            return 'Normal';
+        }
+
+        function getHeartStatusClass(heartRate) {
+            if (heartRate < 60 || heartRate > 100) return 'warning';
+            return 'normal';
+        }
+
+        function getTempStatus(temp) {
+            if (temp < 36.0) return 'Low';
+            if (temp > 37.5) return 'High';
+            return 'Normal';
+        }
+
+        function getTempStatusClass(temp) {
+            if (temp < 36.0 || temp > 37.5) return 'warning';
+            return 'normal';
+        }
+
+        function getSpo2Status(spo2) {
+            if (spo2 < 90) return 'Low';
+            if (spo2 < 95) return 'Borderline';
+            return 'Normal';
+        }
+
+        function getSpo2StatusClass(spo2) {
+            if (spo2 < 90) return 'critical';
+            if (spo2 < 95) return 'warning';
+            return 'normal';
+        }
+
+        function getBatteryStatus(battery) {
+            if (battery < 20) return 'Low';
+            if (battery < 50) return 'Medium';
+            return 'Good';
+        }
+
+        function getBatteryStatusClass(battery) {
+            if (battery < 20) return 'critical';
+            if (battery < 50) return 'warning';
+            return 'normal';
+        }
+
+        function formatEventTitle(event) {
+            return event.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatEventDescription(eventData) {
+            const descriptions = {
+                'FALL_DETECTED': 'A fall has been detected. Immediate attention may be required.',
+                'PANIC_BUTTON': 'Emergency button pressed by patient. Immediate assistance required.',
+                'HEALTH_ANOMALY': 'Health anomaly detected. Patient condition needs monitoring.',
+                'DEVICE_REMOVED': 'Device has been removed. Patient may not be protected.',
+                'LOW_BATTERY': 'Device battery is low. Charging required soon.',
+                'NO_MOVEMENT': 'No movement detected. Patient may need assistance.'
+            };
+            return descriptions[eventData.event] || 'System event detected.';
+        }
+
+        function getAlertClass(event) {
+            if (event === 'FALL_DETECTED' || event === 'PANIC_BUTTON') return 'emergency';
+            if (event === 'HEALTH_ANOMALY' || event === 'NO_MOVEMENT') return 'warning';
+            return 'info';
+        }
+
+        function getAlertBannerClass(event) {
+            if (event === 'FALL_DETECTED' || event === 'PANIC_BUTTON') return '';
+            if (event === 'HEALTH_ANOMALY' || event === 'NO_MOVEMENT') return 'warning';
+            return 'info';
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString();
+        }
+
+        // Heartbeat
+        function sendHeartbeat() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({type: 'ping'}));
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initWebSocket();
+            setInterval(sendHeartbeat, 30000); // Send heartbeat every 30 seconds
+        };
+
+        // Cleanup on unload
+        window.onbeforeunload = function() {
+            if (ws) {
+                ws.close();
+            }
+        };
+    </script>
+</body>
+</html>
