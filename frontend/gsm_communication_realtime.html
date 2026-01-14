@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverCare GSM Communication</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            color: #1f2937;
+            font-size: 32px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .gsm-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .status-dot.connecting {
+            background: #f59e0b;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Dashboard Grid */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .card-icon.sms {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .card-icon.call {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .card-icon.emergency {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .card-icon.status {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        /* SMS Section */
+        .sms-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #1f2937;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            padding: 10px 15px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: #3b82f6;
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .priority-selector {
+            display: flex;
+            gap: 10px;
+        }
+
+        .priority-option {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 12px;
+        }
+
+        .priority-option.selected {
+            border-color: #3b82f6;
+            background: #eff6ff;
+            color: #2563eb;
+        }
+
+        .priority-option.low.selected {
+            border-color: #10b981;
+            background: #ecfdf5;
+            color: #059669;
+        }
+
+        .priority-option.high.selected {
+            border-color: #f59e0b;
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        .priority-option.emergency.selected {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .send-button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .send-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(59, 130, 246, 0.3);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Call Section */
+        .call-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .call-button {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .call-button.voice {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        .call-button.video {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .call-button.emergency {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .call-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .call-icon {
+            font-size: 24px;
+        }
+
+        /* Emergency Section */
+        .emergency-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .emergency-types {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .emergency-type {
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 13px;
+        }
+
+        .emergency-type.selected {
+            border-color: #ef4444;
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .emergency-button {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .emergency-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Status Display */
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .status-item {
+            padding: 15px;
+            background: linear-gradient(135deg, #f8fafc, #e2e8f0);
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .status-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Communication Log */
+        .comm-log {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .log-container {
+            max-height: 400px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .log-item {
+            display: flex;
+            gap: 15px;
+            padding: 12px;
+            border-left: 3px solid #e5e7eb;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+
+        .log-item.sms {
+            border-left-color: #3b82f6;
+        }
+
+        .log-item.call {
+            border-left-color: #10b981;
+        }
+
+        .log-item.emergency {
+            border-left-color: #ef4444;
+        }
+
+        .log-item.status {
+            border-left-color: #8b5cf6;
+        }
+
+        .log-time {
+            color: #6b7280;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .log-content {
+            flex: 1;
+        }
+
+        .log-message {
+            color: #1f2937;
+            margin-bottom: 5px;
+        }
+
+        .log-details {
+            color: #6b7280;
+            font-size: 12px;
+        }
+
+        .log-status {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .log-status.sent {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .log-status.delivered {
+            background: #dbeafe;
+            color: #1d4ed8;
+        }
+
+        .log-status.failed {
+            background: #fef2f2;
+            color: #dc2626;
+        }
+
+        .log-status.pending {
+            background: #fef3c7;
+            color: #d97706;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .action-button {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-button.primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .action-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #1f2937;
+            border: 1px solid #d1d5db;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .call-controls,
+            .emergency-types,
+            .status-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Status Messages */
+        .status-message {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        .status-message.show {
+            display: block;
+        }
+
+        .status-message.success {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid #10b981;
+            color: #059669;
+        }
+
+        .status-message.error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            color: #dc2626;
+        }
+
+        .status-message.info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid #3b82f6;
+            color: #2563eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Status Message -->
+        <div id="statusMessage" class="status-message">
+            <span id="statusText">Initializing GSM system...</span>
+        </div>
+
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    📱 GSM Communication Center
+                </h1>
+                <div class="gsm-status">
+                    <div id="gsmStatus" class="status-dot offline"></div>
+                    <span id="gsmStatusText">Offline</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Grid -->
+        <div class="dashboard-grid">
+            <!-- SMS Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Send SMS</div>
+                    <div class="card-icon sms">💬</div>
+                </div>
+                <form class="sms-form" onsubmit="sendSMS(event)">
+                    <div class="form-group">
+                        <label class="form-label">Guardian</label>
+                        <select class="form-select" id="smsGuardian" required>
+                            <option value="">Select guardian</option>
+                            <option value="guardian_001">John Guardian - +1234567890</option>
+                            <option value="guardian_002">Jane Guardian - +0987654321</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message</label>
+                        <textarea class="form-textarea" id="smsMessage" placeholder="Type your message..." required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Priority</label>
+                        <div class="priority-selector">
+                            <div class="priority-option low" data-priority="low" onclick="selectPriority(this, 'low')">Low</div>
+                            <div class="priority-option selected" data-priority="normal" onclick="selectPriority(this, 'normal')">Normal</div>
+                            <div class="priority-option high" data-priority="high" onclick="selectPriority(this, 'high')">High</div>
+                            <div class="priority-option emergency" data-priority="emergency" onclick="selectPriority(this, 'emergency')">Emergency</div>
+                        </div>
+                    </div>
+                    <button type="submit" class="send-button" id="sendSmsButton">
+                        <span>📤</span>
+                        <span>Send SMS</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- Voice Call Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Voice Calls</div>
+                    <div class="card-icon call">📞</div>
+                </div>
+                <div class="call-controls">
+                    <button class="call-button voice" onclick="initiateCall('voice')">
+                        <div class="call-icon">📞</div>
+                        <div>Voice Call</div>
+                    </button>
+                    <button class="call-button video" onclick="initiateCall('video')">
+                        <div class="call-icon">📹</div>
+                        <div>Video Call</div>
+                    </button>
+                    <button class="call-button emergency" onclick="initiateCall('emergency')">
+                        <div class="call-icon">🚨</div>
+                        <div>Emergency Call</div>
+                    </button>
+                    <button class="call-button voice" onclick="initiateCall('check_in')">
+                        <div class="call-icon">👋</div>
+                        <div>Check-in Call</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Emergency Alert Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">Emergency Alert</div>
+                    <div class="card-icon emergency">🚨</div>
+                </div>
+                <form class="emergency-form" onsubmit="sendEmergencyAlert(event)">
+                    <div class="form-group">
+                        <label class="form-label">Alert Type</label>
+                        <div class="emergency-types">
+                            <div class="emergency-type selected" data-type="Medical Emergency" onclick="selectEmergencyType(this, 'Medical Emergency')">Medical</div>
+                            <div class="emergency-type" data-type="Fall Detected" onclick="selectEmergencyType(this, 'Fall Detected')">Fall</div>
+                            <div class="emergency-type" data-type="No Movement" onclick="selectEmergencyType(this, 'No Movement')">No Movement</div>
+                            <div class="emergency-type" data-type="Device Removed" onclick="selectEmergencyType(this, 'Device Removed')">Device</div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-input" id="emergencyLocation" placeholder="123 Main St, New York, NY">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Medical Info (Optional)</label>
+                        <input type="text" class="form-input" id="emergencyMedical" placeholder="Diabetes, Hypertension">
+                    </div>
+                    <button type="submit" class="emergency-button">
+                        <span>🚨</span>
+                        <span>Send Emergency Alert</span>
+                    </button>
+                </form>
+            </div>
+
+            <!-- GSM Status Card -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">GSM Status</div>
+                    <div class="card-icon status">📊</div>
+                </div>
+                <div class="status-grid">
+                    <div class="status-item">
+                        <div id="signalStrength" class="status-value">--</div>
+                        <div class="status-label">Signal Strength</div>
+                    </div>
+                    <div class="status-item">
+                        <div id="networkStatus" class="status-value">--</div>
+                        <div class="status-label">Network Status</div>
+                    </div>
+                    <div class="status-item">
+                        <div id="outgoingMessages" class="status-value">0</div>
+                        <div class="status-label">Outgoing Messages</div>
+                    </div>
+                    <div class="status-item">
+                        <div id="incomingMessages" class="status-value">0</div>
+                        <div class="status-label">Incoming Messages</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="card-header">
+                <div class="card-title">Quick Actions</div>
+            </div>
+            <div class="actions-grid">
+                <button class="action-button primary" onclick="testGSMSystem()">
+                    🧪 Test GSM System
+                </button>
+                <button class="action-button primary" onclick="sendLocationUpdate()">
+                    📍 Send Location
+                </button>
+                <button class="action-button secondary" onclick="checkNetworkStatus()">
+                    📡 Check Network
+                </button>
+                <button class="action-button secondary" onclick="viewMessageHistory()">
+                    📋 Message History
+                </button>
+            </div>
+        </div>
+
+        <!-- Communication Log -->
+        <div class="comm-log">
+            <div class="card-header">
+                <div class="card-title">Communication Log</div>
+            </div>
+            <div class="log-container" id="commLog">
+                <div class="log-item status">
+                    <div class="log-time">--:--</div>
+                    <div class="log-content">
+                        <div class="log-message">GSM Communication Center initialized</div>
+                        <div class="log-details">System ready for communication</div>
+                    </div>
+                    <div class="log-status sent">Ready</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // GSM API connection
+        let gsmConnected = false;
+        let messageCount = { outgoing: 0, incoming: 0 };
+        let selectedPriority = 'normal';
+        let selectedEmergencyType = 'Medical Emergency';
+
+        // Initialize GSM system
+        function initGSMSystem() {
+            showStatusMessage('Connecting to GSM system...', 'info');
+            
+            // Simulate connection
+            setTimeout(() => {
+                gsmConnected = true;
+                updateGSMStatus(true);
+                showStatusMessage('GSM system connected', 'success');
+                addCommLog('GSM system connected and ready', 'status', 'System ready for communication', 'sent');
+                updateGSMStats();
+            }, 2000);
+        }
+
+        // Update GSM status
+        function updateGSMStatus(connected) {
+            const statusDot = document.getElementById('gsmStatus');
+            const statusText = document.getElementById('gsmStatusText');
+            
+            if (connected) {
+                statusDot.className = 'status-dot online';
+                statusText.textContent = 'Online';
+            } else {
+                statusDot.className = 'status-dot offline';
+                statusText.textContent = 'Offline';
+            }
+        }
+
+        // Update GSM statistics
+        function updateGSMStats() {
+            document.getElementById('signalStrength').textContent = Math.floor(Math.random() * 20 + 70) + '%';
+            document.getElementById('networkStatus').textContent = '4G LTE';
+            document.getElementById('outgoingMessages').textContent = messageCount.outgoing;
+            document.getElementById('incomingMessages').textContent = messageCount.incoming;
+        }
+
+        // Priority selection
+        function selectPriority(element, priority) {
+            document.querySelectorAll('.priority-option').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedPriority = priority;
+        }
+
+        // Emergency type selection
+        function selectEmergencyType(element, type) {
+            document.querySelectorAll('.emergency-type').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            element.classList.add('selected');
+            selectedEmergencyType = type;
+        }
+
+        // Send SMS
+        function sendSMS(event) {
+            event.preventDefault();
+            
+            if (!gsmConnected) {
+                showStatusMessage('GSM system not connected', 'error');
+                return;
+            }
+            
+            const guardian = document.getElementById('smsGuardian').value;
+            const message = document.getElementById('smsMessage').value;
+            
+            // Show loading
+            const sendButton = document.getElementById('sendSmsButton');
+            const originalContent = sendButton.innerHTML;
+            sendButton.innerHTML = '<span class="loading"></span><span>Sending...</span>';
+            sendButton.disabled = true;
+            
+            // Simulate SMS sending
+            setTimeout(() => {
+                messageCount.outgoing++;
+                updateGSMStats();
+                
+                addCommLog(`SMS sent to ${guardian}`, 'sms', message, 'delivered');
+                showStatusMessage('SMS sent successfully', 'success');
+                
+                // Reset form
+                event.target.reset();
+                document.querySelectorAll('.priority-option').forEach(opt => {
+                    opt.classList.remove('selected');
+                });
+                document.querySelector('.priority-option[data-priority="normal"]').classList.add('selected');
+                
+                // Reset button
+                sendButton.innerHTML = originalContent;
+                sendButton.disabled = false;
+            }, 1500);
+        }
+
+        // Initiate call
+        function initiateCall(callType) {
+            if (!gsmConnected) {
+                showStatusMessage('GSM system not connected', 'error');
+                return;
+            }
+            
+            const callMessages = {
+                'voice': 'Voice call initiated to guardian',
+                'video': 'Video call initiated to guardian',
+                'emergency': 'Emergency call initiated to all contacts',
+                'check_in': 'Check-in call initiated to patient'
+            };
+            
+            addCommLog(callMessages[callType], 'call', `Call type: ${callType}`, 'pending');
+            showStatusMessage(`${callType} call initiated`, 'info');
+            
+            // Simulate call connection
+            setTimeout(() => {
+                addCommLog(`${callType} call connected`, 'call', 'Duration: 00:00', 'sent');
+            }, 2000);
+        }
+
+        // Send emergency alert
+        function sendEmergencyAlert(event) {
+            event.preventDefault();
+            
+            if (!gsmConnected) {
+                showStatusMessage('GSM system not connected', 'error');
+                return;
+            }
+            
+            const location = document.getElementById('emergencyLocation').value;
+            const medicalInfo = document.getElementById('emergencyMedical').value;
+            
+            addCommLog(`Emergency alert: ${selectedEmergencyType}`, 'emergency', `Location: ${location}`, 'sent');
+            showStatusMessage('Emergency alert sent to all contacts', 'success');
+            
+            // Reset form
+            event.target.reset();
+            document.querySelectorAll('.emergency-type').forEach(opt => {
+                opt.classList.remove('selected');
+            });
+            document.querySelector('.emergency-type[data-type="Medical Emergency"]').classList.add('selected');
+            
+            // Simulate emergency response
+            setTimeout(() => {
+                addCommLog('Emergency services notified', 'emergency', 'Response team dispatched', 'delivered');
+            }, 1000);
+        }
+
+        // Quick actions
+        function testGSMSystem() {
+            if (!gsmConnected) {
+                showStatusMessage('GSM system not connected', 'error');
+                return;
+            }
+            
+            showStatusMessage('Testing GSM system...', 'info');
+            
+            setTimeout(() => {
+                addCommLog('GSM test completed', 'status', 'All systems operational', 'sent');
+                showStatusMessage('GSM system test passed', 'success');
+            }, 1500);
+        }
+
+        function sendLocationUpdate() {
+            if (!gsmConnected) {
+                showStatusMessage('GSM system not connected', 'error');
+                return;
+            }
+            
+            const location = '123 Main St, New York, NY';
+            addCommLog('Location update sent', 'sms', `Current location: ${location}`, 'delivered');
+            showStatusMessage('Location update sent', 'success');
+        }
+
+        function checkNetworkStatus() {
+            if (!gsmConnected) {
+                showStatusMessage('GSM system not connected', 'error');
+                return;
+            }
+            
+            showStatusMessage('Checking network status...', 'info');
+            
+            setTimeout(() => {
+                updateGSMStats();
+                addCommLog('Network status checked', 'status', 'Signal: Excellent, Network: 4G LTE', 'sent');
+                showStatusMessage('Network status: Excellent', 'success');
+            }, 1000);
+        }
+
+        function viewMessageHistory() {
+            showStatusMessage('Opening message history...', 'info');
+            // In a real implementation, this would open a detailed history view
+        }
+
+        // Add communication log entry
+        function addCommLog(message, type, details, status) {
+            const logContainer = document.getElementById('commLog');
+            const logItem = document.createElement('div');
+            logItem.className = `log-item ${type}`;
+            
+            const time = new Date().toLocaleTimeString();
+            
+            logItem.innerHTML = `
+                <div class="log-time">${time}</div>
+                <div class="log-content">
+                    <div class="log-message">${message}</div>
+                    <div class="log-details">${details}</div>
+                </div>
+                <div class="log-status ${status}">${status}</div>
+            `;
+            
+            logContainer.insertBefore(logItem, logContainer.firstChild);
+            
+            // Keep only last 50 logs
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        // Show status message
+        function showStatusMessage(message, type) {
+            const messageDiv = document.getElementById('statusMessage');
+            const messageText = document.getElementById('statusText');
+            
+            messageText.textContent = message;
+            messageDiv.className = `status-message show ${type}`;
+            
+            // Hide after 3 seconds
+            setTimeout(() => {
+                messageDiv.classList.remove('show');
+            }, 3000);
+        }
+
+        // Auto-update statistics
+        function startAutoUpdate() {
+            setInterval(() => {
+                if (gsmConnected) {
+                    updateGSMStats();
+                }
+            }, 30000); // Update every 30 seconds
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initGSMSystem();
+            startAutoUpdate();
+        };
+    </script>
+</body>
+</html>

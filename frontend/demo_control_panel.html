@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SilverCare Demo Control Panel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            min-height: 100vh;
+            color: #f1f5f9;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header h1 {
+            color: #f1f5f9;
+            font-size: 32px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .demo-badge {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.online {
+            background: #10b981;
+        }
+
+        .status-dot.offline {
+            background: #ef4444;
+        }
+
+        .status-dot.warning {
+            background: #f59e0b;
+        }
+
+        /* System Status */
+        .system-status {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .status-item {
+            text-align: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f1f5f9;
+            margin-bottom: 5px;
+        }
+
+        .status-label {
+            font-size: 12px;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Control Panels */
+        .control-panels {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .panel-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f1f5f9;
+        }
+
+        .panel-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .panel-icon.emergency {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .panel-icon.scenario {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .panel-icon.system {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .panel-icon.health {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+        }
+
+        /* Emergency Buttons */
+        .emergency-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .emergency-button {
+            padding: 20px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .emergency-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+        }
+
+        .emergency-button:hover::before {
+            transform: translateX(0);
+        }
+
+        .emergency-button.fall {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            color: white;
+        }
+
+        .emergency-button.panic {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+        }
+
+        .emergency-button.collapse {
+            background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+            color: white;
+        }
+
+        .emergency-button.unconscious {
+            background: linear-gradient(135deg, #6366f1, #4f46e5);
+            color: white;
+        }
+
+        .emergency-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        }
+
+        .emergency-button:active {
+            transform: translateY(0);
+        }
+
+        .button-icon {
+            font-size: 24px;
+        }
+
+        .button-text {
+            font-size: 14px;
+            text-align: center;
+        }
+
+        /* Scenario Buttons */
+        .scenario-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .scenario-button {
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .scenario-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .scenario-button.active {
+            background: rgba(59, 130, 246, 0.2);
+            border-color: #3b82f6;
+        }
+
+        /* System Controls */
+        .system-controls {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .control-button {
+            padding: 15px 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            color: #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .control-button.danger {
+            border-color: #ef4444;
+            color: #ef4444;
+        }
+
+        .control-button.danger:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Health Simulation */
+        .health-controls {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .health-button {
+            padding: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.05);
+            color: #f1f5f9;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .health-button:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateY(-1px);
+        }
+
+        .health-icon {
+            font-size: 20px;
+        }
+
+        /* Activity Log */
+        .activity-log {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .log-container {
+            max-height: 300px;
+            overflow-y: auto;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+        .log-item {
+            display: flex;
+            gap: 15px;
+            padding: 10px;
+            border-left: 3px solid #475569;
+            margin-bottom: 10px;
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+
+        .log-item.emergency {
+            border-left-color: #ef4444;
+        }
+
+        .log-item.scenario {
+            border-left-color: #f59e0b;
+        }
+
+        .log-item.system {
+            border-left-color: #3b82f6;
+        }
+
+        .log-item.health {
+            border-left-color: #10b981;
+        }
+
+        .log-time {
+            color: #94a3b8;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        .log-message {
+            flex: 1;
+            color: #f1f5f9;
+        }
+
+        .log-type {
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+
+        .log-type.emergency {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        .log-type.scenario {
+            background: rgba(245, 158, 11, 0.2);
+            color: #f59e0b;
+        }
+
+        .log-type.system {
+            background: rgba(59, 130, 246, 0.2);
+            color: #3b82f6;
+        }
+
+        .log-type.health {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .action-button {
+            padding: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .action-button.primary {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+        }
+
+        .action-button.secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .control-panels {
+                grid-template-columns: 1fr;
+            }
+
+            .emergency-buttons,
+            .scenario-buttons,
+            .health-controls {
+                grid-template-columns: 1fr;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Animations */
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .log-item {
+            animation: slideIn 0.3s ease;
+        }
+
+        /* Status Indicator */
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-indicator.active {
+            background: #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        .status-indicator.inactive {
+            background: #ef4444;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>
+                    🎮 Demo Control Panel
+                    <span class="demo-badge">LIVE DEMO</span>
+                </h1>
+                <div class="connection-status">
+                    <div id="connectionStatus" class="status-dot offline"></div>
+                    <span id="connectionText">Offline</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- System Status -->
+        <div class="system-status">
+            <div class="status-grid">
+                <div class="status-item">
+                    <div id="systemState" class="status-value">NORMAL</div>
+                    <div class="status-label">System State</div>
+                </div>
+                <div class="status-item">
+                    <div id="activeAlerts" class="status-value">0</div>
+                    <div class="status-label">Active Alerts</div>
+                </div>
+                <div class="status-item">
+                    <div id="simulationState" class="status-value">WALKING</div>
+                    <div class="status-label">Simulation State</div>
+                </div>
+                <div class="status-item">
+                    <div id="totalEvents" class="status-value">0</div>
+                    <div class="status-label">Total Events</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Control Panels -->
+        <div class="control-panels">
+            <!-- Emergency Scenarios -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Emergency Scenarios</div>
+                    <div class="panel-icon emergency">🚨</div>
+                </div>
+                <div class="emergency-buttons">
+                    <button class="emergency-button fall" onclick="simulateFallForward()">
+                        <div class="button-icon">🤕</div>
+                        <div class="button-text">Fall Forward</div>
+                    </button>
+                    <button class="emergency-button panic" onclick="simulatePanicButton()">
+                        <div class="button-icon">🆘</div>
+                        <div class="button-text">Panic Button</div>
+                    </button>
+                    <button class="emergency-button collapse" onclick="simulateSuddenCollapse()">
+                        <div class="button-icon">💥</div>
+                        <div class="button-text">Sudden Collapse</div>
+                    </button>
+                    <button class="emergency-button unconscious" onclick="simulateUnconsciousness()">
+                        <div class="button-icon">😵</div>
+                        <div class="button-text">Unconsciousness</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Daily Scenarios -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Daily Scenarios</div>
+                    <div class="panel-icon scenario">🏠</div>
+                </div>
+                <div class="scenario-buttons">
+                    <button class="scenario-button" onclick="simulateNormalWalking()">
+                        <span>🚶</span>
+                        <span>Normal Walking</span>
+                    </button>
+                    <button class="scenario-button" onclick="simulateSitting()">
+                        <span>🪑</span>
+                        <span>Sitting</span>
+                    </button>
+                    <button class="scenario-button" onclick="simulateSleeping()">
+                        <span>😴</span>
+                        <span>Sleeping</span>
+                    </button>
+                    <button class="scenario-button" onclick="simulateLowBattery()">
+                        <span>🔋</span>
+                        <span>Low Battery</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- System Controls -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">System Controls</div>
+                    <div class="panel-icon system">⚙️</div>
+                </div>
+                <div class="system-controls">
+                    <button class="control-button" onclick="resetSystem()">
+                        <span>🔄 Reset System</span>
+                        <span class="status-indicator inactive"></span>
+                    </button>
+                    <button class="control-button" onclick="toggleSimulation()">
+                        <span id="simToggleText">⏸️ Pause Simulation</span>
+                        <span class="status-indicator active"></span>
+                    </button>
+                    <button class="control-button" onclick="clearAlerts()">
+                        <span>🧹 Clear All Alerts</span>
+                        <span class="status-indicator inactive"></span>
+                    </button>
+                    <button class="control-button danger" onclick="emergencyStop()">
+                        <span>🛑 Emergency Stop</span>
+                        <span class="status-indicator inactive"></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Health Simulation -->
+            <div class="panel">
+                <div class="panel-header">
+                    <div class="panel-title">Health Simulation</div>
+                    <div class="panel-icon health">💓</div>
+                </div>
+                <div class="health-controls">
+                    <button class="health-button" onclick="simulateHighHeartRate()">
+                        <div class="health-icon">❤️</div>
+                        <div>High Heart Rate</div>
+                    </button>
+                    <button class="health-button" onclick="simulateLowHeartRate()">
+                        <div class="health-icon">💔</div>
+                        <div>Low Heart Rate</div>
+                    </button>
+                    <button class="health-button" onclick="simulateHighTemperature()">
+                        <div class="health-icon">🌡️</div>
+                        <div>High Temperature</div>
+                    </button>
+                    <button class="health-button" onclick="simulateLowSpO2()">
+                        <div class="health-icon">🫁</div>
+                        <div>Low SpO₂</div>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="panel-header">
+                <div class="panel-title">Quick Actions</div>
+            </div>
+            <div class="actions-grid">
+                <button class="action-button primary" onclick="runFullDemo()">
+                    🎭 Run Full Demo
+                </button>
+                <button class="action-button primary" onclick="runStressTest()">
+                    🧪 Stress Test
+                </button>
+                <button class="action-button secondary" onclick="exportLogs()">
+                    📊 Export Logs
+                </button>
+                <button class="action-button secondary" onclick="openDashboards()">
+                    🖥️ Open Dashboards
+                </button>
+            </div>
+        </div>
+
+        <!-- Activity Log -->
+        <div class="activity-log">
+            <div class="panel-header">
+                <div class="panel-title">Activity Log</div>
+            </div>
+            <div class="log-container" id="logContainer">
+                <div class="log-item system">
+                    <div class="log-time">--:--</div>
+                    <div class="log-message">Demo Control Panel initialized</div>
+                    <div class="log-type system">System</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // WebSocket connection
+        let ws = null;
+        let reconnectTimer = null;
+        let isSimulationRunning = true;
+        let eventCount = 0;
+
+        // Initialize connection
+        function initWebSocket() {
+            try {
+                ws = new WebSocket('ws://localhost:8765');
+                
+                ws.onopen = function() {
+                    console.log('Connected to WebSocket server');
+                    updateConnectionStatus(true);
+                    addLog('Connected to system', 'system');
+                    
+                    // Request initial status
+                    ws.send(JSON.stringify({type: 'get_status'}));
+                };
+                
+                ws.onmessage = function(event) {
+                    const data = JSON.parse(event.data);
+                    handleWebSocketMessage(data);
+                };
+                
+                ws.onclose = function() {
+                    console.log('WebSocket connection closed');
+                    updateConnectionStatus(false);
+                    addLog('Connection lost', 'system');
+                    scheduleReconnect();
+                };
+                
+                ws.onerror = function(error) {
+                    console.error('WebSocket error:', error);
+                    addLog('Connection error', 'system');
+                };
+                
+            } catch (error) {
+                console.error('Failed to connect:', error);
+                addLog('Failed to connect to system', 'system');
+                scheduleReconnect();
+            }
+        }
+
+        // Schedule reconnection
+        function scheduleReconnect() {
+            if (reconnectTimer) {
+                clearTimeout(reconnectTimer);
+            }
+            reconnectTimer = setTimeout(initWebSocket, 3000);
+        }
+
+        // Handle WebSocket messages
+        function handleWebSocketMessage(data) {
+            switch(data.type) {
+                case 'system_status':
+                    updateSystemStatus(data.data);
+                    break;
+                case 'system_event':
+                    handleSystemEvent(data.data);
+                    break;
+                case 'pong':
+                    // Heartbeat response
+                    break;
+            }
+        }
+
+        // Update system status
+        function updateSystemStatus(status) {
+            document.getElementById('systemState').textContent = status.state;
+            document.getElementById('simulationState').textContent = formatActivityState(status.simulation_state);
+            document.getElementById('activeAlerts').textContent = status.active_alerts || 0;
+            document.getElementById('totalEvents').textContent = status.metrics?.total_events || 0;
+        }
+
+        // Handle system events
+        function handleSystemEvent(eventData) {
+            eventCount++;
+            document.getElementById('totalEvents').textContent = eventCount;
+            
+            if (eventData.action_required) {
+                document.getElementById('activeAlerts').textContent = 
+                    parseInt(document.getElementById('activeAlerts').textContent) + 1;
+            }
+            
+            addLog(`${eventData.event} detected`, getEventType(eventData.event));
+        }
+
+        // Emergency scenario functions
+        function simulateFallForward() {
+            sendCommand('fall_forward');
+            addLog('Simulating forward fall', 'emergency');
+        }
+
+        function simulatePanicButton() {
+            sendCommand('panic_button');
+            addLog('Simulating panic button press', 'emergency');
+        }
+
+        function simulateSuddenCollapse() {
+            sendCommand('sudden_collapse');
+            addLog('Simulating sudden collapse', 'emergency');
+        }
+
+        function simulateUnconsciousness() {
+            sendCommand('no_movement');
+            addLog('Simulating unconsciousness', 'emergency');
+        }
+
+        // Daily scenario functions
+        function simulateNormalWalking() {
+            sendCommand('reset');
+            addLog('Simulating normal walking', 'scenario');
+        }
+
+        function simulateSitting() {
+            sendCommand('sitting');
+            addLog('Simulating sitting', 'scenario');
+        }
+
+        function simulateSleeping() {
+            sendCommand('sleeping');
+            addLog('Simulating sleeping', 'scenario');
+        }
+
+        function simulateLowBattery() {
+            sendCommand('low_battery');
+            addLog('Simulating low battery', 'scenario');
+        }
+
+        // Health simulation functions
+        function simulateHighHeartRate() {
+            addLog('Simulating high heart rate', 'health');
+            // This would need to be implemented in the simulator
+        }
+
+        function simulateLowHeartRate() {
+            addLog('Simulating low heart rate', 'health');
+            // This would need to be implemented in the simulator
+        }
+
+        function simulateHighTemperature() {
+            addLog('Simulating high temperature', 'health');
+            // This would need to be implemented in the simulator
+        }
+
+        function simulateLowSpO2() {
+            addLog('Simulating low SpO₂', 'health');
+            // This would need to be implemented in the simulator
+        }
+
+        // System control functions
+        function resetSystem() {
+            sendCommand('reset');
+            eventCount = 0;
+            document.getElementById('totalEvents').textContent = '0';
+            document.getElementById('activeAlerts').textContent = '0';
+            addLog('System reset', 'system');
+        }
+
+        function toggleSimulation() {
+            isSimulationRunning = !isSimulationRunning;
+            const toggleText = document.getElementById('simToggleText');
+            
+            if (isSimulationRunning) {
+                toggleText.textContent = '⏸️ Pause Simulation';
+                addLog('Simulation resumed', 'system');
+            } else {
+                toggleText.textContent = '▶️ Resume Simulation';
+                addLog('Simulation paused', 'system');
+            }
+        }
+
+        function clearAlerts() {
+            document.getElementById('activeAlerts').textContent = '0';
+            addLog('All alerts cleared', 'system');
+        }
+
+        function emergencyStop() {
+            if (confirm('Are you sure you want to emergency stop the system?')) {
+                sendCommand('reset');
+                isSimulationRunning = false;
+                document.getElementById('simToggleText').textContent = '▶️ Resume Simulation';
+                addLog('EMERGENCY STOP ACTIVATED', 'emergency');
+            }
+        }
+
+        // Quick action functions
+        function runFullDemo() {
+            addLog('Starting full demo sequence', 'system');
+            
+            const demoSequence = [
+                { action: 'reset', delay: 0, message: 'System reset' },
+                { action: 'normal_walking', delay: 2000, message: 'Normal walking' },
+                { action: 'sitting', delay: 5000, message: 'Sitting down' },
+                { action: 'fall_forward', delay: 8000, message: 'Fall detected!' },
+                { action: 'panic_button', delay: 12000, message: 'Panic button pressed!' },
+                { action: 'recovery', delay: 15000, message: 'Recovery mode' },
+                { action: 'normal_walking', delay: 18000, message: 'Back to normal' }
+            ];
+            
+            demoSequence.forEach(step => {
+                setTimeout(() => {
+                    sendCommand(step.action);
+                    addLog(step.message, 'scenario');
+                }, step.delay);
+            });
+        }
+
+        function runStressTest() {
+            addLog('Starting stress test', 'system');
+            
+            const stressSequence = [
+                'fall_forward', 'panic_button', 'sudden_collapse', 
+                'no_movement', 'low_battery', 'fall_sideways'
+            ];
+            
+            let delay = 0;
+            stressSequence.forEach(action => {
+                setTimeout(() => {
+                    sendCommand(action);
+                    addLog(`Stress test: ${action}`, 'emergency');
+                }, delay);
+                delay += 3000;
+            });
+        }
+
+        function exportLogs() {
+            const logs = Array.from(document.querySelectorAll('.log-item')).map(item => ({
+                time: item.querySelector('.log-time').textContent,
+                message: item.querySelector('.log-message').textContent,
+                type: item.querySelector('.log-type').textContent
+            }));
+            
+            const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `demo-logs-${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            
+            addLog('Logs exported', 'system');
+        }
+
+        function openDashboards() {
+            const dashboards = [
+                'senior_dashboard_realtime.html',
+                'guardian_dashboard_realtime.html',
+                'learning_analytics_realtime.html'
+            ];
+            
+            dashboards.forEach(dashboard => {
+                window.open(dashboard, '_blank');
+            });
+            
+            addLog('Dashboards opened', 'system');
+        }
+
+        // Send command to server
+        function sendCommand(command) {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'force_event',
+                    event: command
+                }));
+            } else {
+                addLog('Cannot send command - not connected', 'system');
+            }
+        }
+
+        // Update connection status
+        function updateConnectionStatus(connected) {
+            const statusDot = document.getElementById('connectionStatus');
+            const statusText = document.getElementById('connectionText');
+            
+            if (connected) {
+                statusDot.className = 'status-dot online';
+                statusText.textContent = 'Connected';
+            } else {
+                statusDot.className = 'status-dot offline';
+                statusText.textContent = 'Offline';
+            }
+        }
+
+        // Add log entry
+        function addLog(message, type) {
+            const logContainer = document.getElementById('logContainer');
+            const logItem = document.createElement('div');
+            logItem.className = `log-item ${type}`;
+            
+            const time = new Date().toLocaleTimeString();
+            
+            logItem.innerHTML = `
+                <div class="log-time">${time}</div>
+                <div class="log-message">${message}</div>
+                <div class="log-type ${type}">${type}</div>
+            `;
+            
+            logContainer.insertBefore(logItem, logContainer.firstChild);
+            
+            // Keep only last 50 logs
+            while (logContainer.children.length > 50) {
+                logContainer.removeChild(logContainer.lastChild);
+            }
+        }
+
+        // Utility functions
+        function formatActivityState(state) {
+            return state.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function getEventType(event) {
+            if (event.includes('fall') || event.includes('panic') || event.includes('collapse')) {
+                return 'emergency';
+            } else if (event.includes('health') || event.includes('heart') || event.includes('temp')) {
+                return 'health';
+            } else if (event.includes('battery') || event.includes('device')) {
+                return 'scenario';
+            } else {
+                return 'system';
+            }
+        }
+
+        // Heartbeat
+        function sendHeartbeat() {
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify({type: 'ping'}));
+            }
+        }
+
+        // Initialize on load
+        window.onload = function() {
+            initWebSocket();
+            setInterval(sendHeartbeat, 30000); // Send heartbeat every 30 seconds
+        };
+
+        // Cleanup on unload
+        window.onbeforeunload = function() {
+            if (ws) {
+                ws.close();
+            }
+        };
+    </script>
+</body>
+</html>
